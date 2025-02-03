@@ -27,7 +27,7 @@ POST {{baseUrl}}/repositories
 Content-Type: application/json
 
 {
-    "url": "https://github.com/cleopatracaesar8/test-repo"
+    "url": "https://github.com/firstcontributions/first-contributions"
 }
 
 ### [3.3] Add Invalid URL (Expected: Fail, Invalid URL)

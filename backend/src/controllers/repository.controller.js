@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const axios = require("axios");
 const { Repository, AnalysisTask } = require("../models");
+const logger = require("../config/logger");
 
 // Extract repository information from GitHub URL
 function extractRepoInfo(url) {
@@ -38,13 +39,15 @@ async function checkRepoSize(owner, name) {
         const sizeInKB = response.data.size;
         const sizeInMB = sizeInKB / 1024;
 
-        if (sizeInMB > 1) {
+        if (sizeInMB > 10) {
             throw new Error(
-                `Repository size (${sizeInMB.toFixed(2)}MB) exceeds limit (1MB)`
+                `Repository size (${sizeInMB.toFixed(
+                    2
+                )}MB) exceeds limit (10MB)`
             );
         }
 
-        return true;
+        return sizeInMB;
     } catch (error) {
         if (error.response) {
             throw new Error(
@@ -77,7 +80,7 @@ exports.addRepository = async (req, res) => {
         const { owner, name } = extractRepoInfo(url);
 
         // Check repository size
-        await checkRepoSize(owner, name);
+        const repoSizeMB = await checkRepoSize(owner, name);
 
         // Create local storage directory
         const repoDir = path.join(
@@ -97,6 +100,7 @@ exports.addRepository = async (req, res) => {
             owner,
             localPath: repoDir,
             status: "pending",
+            sizeInMB: parseFloat(repoSizeMB.toFixed(2)),
         });
 
         // Create analysis task
@@ -110,7 +114,7 @@ exports.addRepository = async (req, res) => {
             data: repository,
         });
     } catch (error) {
-        console.error("Failed to add repository:", error);
+        logger.error("Failed to add repository:", error);
 
         // If size limit error, return 413 status code
         if (error.message.includes("exceeds limit")) {
@@ -121,8 +125,8 @@ exports.addRepository = async (req, res) => {
         }
 
         res.status(500).json({
-            message: "Failed to add repository",
-            error: error.message,
+            message: "Internal server error",
+            error: process.env.NODE_ENV === "development" ? error.message : {},
         });
     }
 };

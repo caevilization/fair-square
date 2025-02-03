@@ -28,6 +28,11 @@ const repositorySchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        sizeInMB: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
     },
     {
         timestamps: true,
