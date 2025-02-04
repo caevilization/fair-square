@@ -30,8 +30,8 @@ function extractRepoInfo(url) {
     return { owner, name };
 }
 
-// Check repository size
-async function checkRepoSize(owner, name) {
+// Check repository limits
+async function checkRepoLimits(owner, name) {
     try {
         const response = await axios.get(
             `https://api.github.com/repos/${owner}/${name}`
@@ -39,6 +39,7 @@ async function checkRepoSize(owner, name) {
         const sizeInKB = response.data.size;
         const sizeInMB = sizeInKB / 1024;
 
+        // 检查仓库大小
         if (sizeInMB > 10) {
             throw new Error(
                 `Repository size (${sizeInMB.toFixed(
@@ -47,7 +48,53 @@ async function checkRepoSize(owner, name) {
             );
         }
 
-        return sizeInMB;
+        // 获取提交数量
+        const commitsResponse = await axios.get(
+            `https://api.github.com/repos/${owner}/${name}/commits?per_page=1`,
+            {
+                headers: {
+                    Accept: "application/vnd.github.v3.json",
+                },
+            }
+        );
+
+        const totalCommits = parseInt(
+            commitsResponse.headers["link"]?.match(
+                /page=(\d+)>; rel="last"/
+            )?.[1] || 1
+        );
+        if (totalCommits > 1000) {
+            throw new Error(
+                `Number of commits (${totalCommits}) exceeds limit (1000)`
+            );
+        }
+
+        // 获取贡献者数量
+        const contributorsResponse = await axios.get(
+            `https://api.github.com/repos/${owner}/${name}/contributors?per_page=1`,
+            {
+                headers: {
+                    Accept: "application/vnd.github.v3.json",
+                },
+            }
+        );
+
+        const totalContributors = parseInt(
+            contributorsResponse.headers["link"]?.match(
+                /page=(\d+)>; rel="last"/
+            )?.[1] || 1
+        );
+        if (totalContributors > 300) {
+            throw new Error(
+                `Number of contributors (${totalContributors}) exceeds limit (300)`
+            );
+        }
+
+        return {
+            sizeInMB,
+            totalCommits,
+            totalContributors,
+        };
     } catch (error) {
         if (error.response) {
             throw new Error(
@@ -79,8 +126,15 @@ exports.addRepository = async (req, res) => {
         // Extract repository information
         const { owner, name } = extractRepoInfo(url);
 
-        // Check repository size
-        const repoSizeMB = await checkRepoSize(owner, name);
+        // Check repository limits
+        const limits = await checkRepoLimits(owner, name);
+        logger.info(
+            `Repository limits check passed: size=${limits.sizeInMB.toFixed(
+                2
+            )}MB, commits=${limits.totalCommits}, contributors=${
+                limits.totalContributors
+            }`
+        );
 
         // Create local storage directory
         const repoDir = path.join(
@@ -100,7 +154,9 @@ exports.addRepository = async (req, res) => {
             owner,
             localPath: repoDir,
             status: "pending",
-            sizeInMB: parseFloat(repoSizeMB.toFixed(2)),
+            sizeInMB: parseFloat(limits.sizeInMB.toFixed(2)),
+            totalCommits: limits.totalCommits,
+            totalContributors: limits.totalContributors,
         });
 
         // Create analysis task
@@ -116,7 +172,7 @@ exports.addRepository = async (req, res) => {
     } catch (error) {
         logger.error("Failed to add repository:", error);
 
-        // If size limit error, return 413 status code
+        // If limit exceeded error, return 413 status code
         if (error.message.includes("exceeds limit")) {
             return res.status(413).json({
                 message: "Failed to add repository",

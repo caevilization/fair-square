@@ -22,7 +22,7 @@ Content-Type: application/json
     "url": "https://github.com/facebook/react"
 }
 
-### [3.2] Add Small Test Repository (Expected: Success)
+### [3.2] Add repository with commits exceeding limit
 POST {{baseUrl}}/repositories
 Content-Type: application/json
 
@@ -30,12 +30,12 @@ Content-Type: application/json
     "url": "https://github.com/firstcontributions/first-contributions"
 }
 
-### [3.3] Add Invalid URL (Expected: Fail, Invalid URL)
+### [3.3] Add repository with contributors exceeding limit
 POST {{baseUrl}}/repositories
 Content-Type: application/json
 
 {
-    "url": "invalid-url"
+    "url": "https://github.com/lobehub/lobe-ui"
 }
 
 ### [3.4] Add Empty URL (Expected: Fail, URL Required)
@@ -46,12 +46,12 @@ Content-Type: application/json
     "url": ""
 }
 
-### [3.5] Add Huge Repository - TensorFlow (Expected: Fail, Size Limit Exceeded)
+### [3.5] Add repository that meets all conditions
 POST {{baseUrl}}/repositories
 Content-Type: application/json
 
 {
-    "url": "https://github.com/tensorflow/tensorflow"
+    "url": "https://github.com/ossu/math"
 }
 
 ### [3.6] Add Duplicate Repository (Expected: Fail, Repository Already Exists)

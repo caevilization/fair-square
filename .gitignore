@@ -130,4 +130,10 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# macOS
 .DS_Store
+
+# Fair-square Specific
+.fair-square/
+repos/
+reports/
