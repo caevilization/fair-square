@@ -5,6 +5,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+nohup.out
 .pnpm-debug.log*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
@@ -137,4 +138,3 @@ dist
 .fair-square/
 repos/
 reports/
-aws-ops/

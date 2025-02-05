@@ -1,0 +1,18 @@
+#######################################
+# Eliza Service API Tests
+#######################################
+
+### [1.1] List Available Agents
+# @name listAgents
+GET {{elizaUrl}}/agents
+Content-Type: application/json
+
+### [1.2] Send Message to Agent
+# @name sendMessage
+POST {{elizaUrl}}/e0e10e6f-ff2b-0d4c-8011-1fc1eee7cb32/message
+Content-Type: application/json
+
+{
+    "user": "user",
+    "text": "Hello trump!"
+}
