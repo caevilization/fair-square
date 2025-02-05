@@ -128,29 +128,3 @@ const Screen2: React.FC = () => {
 };
 
 export default Screen2;
-
-// 添加自定义样式到 index.css
-const styles = `
-.custom-dots {
-    bottom: -30px !important;
-}
-
-.custom-dots li {
-    width: 12px;
-    height: 12px;
-}
-
-.custom-dots li button {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: #4B515B !important;
-    opacity: 0.5;
-    transition: all 0.3s;
-}
-
-.custom-dots li.slick-active button {
-    background: linear-gradient(to right top, #FFD369, #F93A3A) !important;
-    opacity: 1;
-}
-`;
