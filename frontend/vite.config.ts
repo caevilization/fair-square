@@ -24,10 +24,18 @@ export default defineConfig({
             },
         },
     },
+    base: "/",
     build: {
         outDir: "dist",
         assetsDir: "assets",
         sourcemap: true,
+        cssTarget: "chrome61",
+        minify: "terser",
+        terserOptions: {
+            compress: {
+                drop_console: true,
+            },
+        },
         rollupOptions: {
             output: {
                 manualChunks: {
@@ -42,5 +50,4 @@ export default defineConfig({
         devSourcemap: true,
     },
     publicDir: "public",
-    base: "./",
 });
