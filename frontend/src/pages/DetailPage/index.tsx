@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Descriptions, Collapse, Avatar, Input, Button, Progress } from "antd";
-import type { CollapseProps } from "antd";
+import { Descriptions, Collapse, Avatar, Button } from "antd";
 import "./styles.css"; // 我们稍后会创建这个文件
 
 // Custom TextArea Component
@@ -179,57 +178,57 @@ const DetailPage: React.FC = () => {
     const [selectedAppeal, setSelectedAppeal] = useState(appeals[0]);
     const [messageInput, setMessageInput] = useState("");
 
-    const items: CollapseProps["items"] = milestones.map((milestone) => ({
-        key: milestone.id,
-        label: (
-            <span>
-                Milestone {milestone.id} - {milestone.name} ({milestone.squares}{" "}
-                sqrs, {milestone.percentage}%)
-            </span>
-        ),
-        children: (
-            <div className="space-y-6 text-white">
-                <div>
-                    <p className="font-bold mb-2">Description</p>
-                    <p className="text-gray-300">{milestone.description}</p>
-                </div>
-                <div>
-                    <p className="font-bold mb-4">Allocation for milestone</p>
-                    <div className="space-y-4">
-                        {milestone.allocations.map((allocation, index) => (
-                            <div
-                                key={index}
-                                className="bg-dark-card rounded-lg p-4 space-y-2"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <Avatar src={allocation.avatar} size={40} />
-                                    <div>
-                                        <p className="font-bold">
-                                            {allocation.name}
-                                        </p>
-                                        <p className="text-sm text-gray-400">
-                                            {allocation.email}
-                                        </p>
-                                    </div>
-                                    <div className="ml-auto text-right">
-                                        <p className="font-bold text-highlight-from">
-                                            {allocation.percentage}%
-                                        </p>
-                                        <p className="text-sm text-gray-400">
-                                            {allocation.squares} sqrs
-                                        </p>
-                                    </div>
-                                </div>
-                                <p className="text-sm text-gray-300">
-                                    {allocation.contribution}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        ),
-    }));
+    // const items: CollapseProps["items"] = milestones.map((milestone) => ({
+    //     key: milestone.id,
+    //     label: (
+    //         <span>
+    //             Milestone {milestone.id} - {milestone.name} ({milestone.squares}{" "}
+    //             sqrs, {milestone.percentage}%)
+    //         </span>
+    //     ),
+    //     children: (
+    //         <div className="space-y-6 text-white">
+    //             <div>
+    //                 <p className="font-bold mb-2">Description</p>
+    //                 <p className="text-gray-300">{milestone.description}</p>
+    //             </div>
+    //             <div>
+    //                 <p className="font-bold mb-4">Allocation for milestone</p>
+    //                 <div className="space-y-4">
+    //                     {milestone.allocations.map((allocation, index) => (
+    //                         <div
+    //                             key={index}
+    //                             className="bg-dark-card rounded-lg p-4 space-y-2"
+    //                         >
+    //                             <div className="flex items-center gap-4">
+    //                                 <Avatar src={allocation.avatar} size={40} />
+    //                                 <div>
+    //                                     <p className="font-bold">
+    //                                         {allocation.name}
+    //                                     </p>
+    //                                     <p className="text-sm text-gray-400">
+    //                                         {allocation.email}
+    //                                     </p>
+    //                                 </div>
+    //                                 <div className="ml-auto text-right">
+    //                                     <p className="font-bold text-highlight-from">
+    //                                         {allocation.percentage}%
+    //                                     </p>
+    //                                     <p className="text-sm text-gray-400">
+    //                                         {allocation.squares} sqrs
+    //                                     </p>
+    //                                 </div>
+    //                             </div>
+    //                             <p className="text-sm text-gray-300">
+    //                                 {allocation.contribution}
+    //                             </p>
+    //                         </div>
+    //                     ))}
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     ),
+    // }));
 
     return (
         <div className="min-h-screen bg-dark-bg font-exo">

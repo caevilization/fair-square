@@ -3,11 +3,18 @@ import { Tooltip, Drawer } from "antd";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 
+interface MenuItem {
+    key: string;
+    label: string;
+    path?: string;
+    disabled?: boolean;
+}
+
 const Navbar: React.FC = () => {
     const [hoveredTab, setHoveredTab] = useState<string | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    const menuItems = [
+    const menuItems: MenuItem[] = [
         { key: "live", label: "Live Feed", path: "/list" },
         { key: "manifesto", label: "Manifesto", disabled: true },
     ];
@@ -41,7 +48,7 @@ const Navbar: React.FC = () => {
                                 </span>
                             ) : (
                                 <Link
-                                    to={item.path}
+                                    to={item.path || "/"}
                                     className="text-xl text-white hover:text-highlight-from transition-colors"
                                     onMouseEnter={() => setHoveredTab(item.key)}
                                     onMouseLeave={() => setHoveredTab(null)}
@@ -92,7 +99,7 @@ const Navbar: React.FC = () => {
                                 </div>
                             ) : (
                                 <Link
-                                    to={item.path}
+                                    to={item.path || "/"}
                                     className="py-4 border-b border-gray-700 text-lg font-medium text-white hover:text-highlight-from transition-colors"
                                     onClick={() => setIsDrawerOpen(false)}
                                 >
