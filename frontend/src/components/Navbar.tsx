@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const menuItems = [
-        { key: "live", label: "Live Feed" },
+        { key: "live", label: "Live Feed", path: "/list" },
         { key: "manifesto", label: "Manifesto", disabled: true },
     ];
 
@@ -27,21 +27,28 @@ const Navbar: React.FC = () => {
                     {menuItems.map((item) => (
                         <Tooltip
                             key={item.key}
-                            title="Coming Soon"
+                            title={item.disabled ? "Coming Soon" : ""}
                             open={hoveredTab === item.key}
                             color="#222831"
                         >
-                            <span
-                                className={`text-xl cursor-pointer ${
-                                    item.disabled
-                                        ? "text-gray-500"
-                                        : "text-white"
-                                }`}
-                                onMouseEnter={() => setHoveredTab(item.key)}
-                                onMouseLeave={() => setHoveredTab(null)}
-                            >
-                                {item.label}
-                            </span>
+                            {item.disabled ? (
+                                <span
+                                    className={`text-xl cursor-pointer text-gray-500`}
+                                    onMouseEnter={() => setHoveredTab(item.key)}
+                                    onMouseLeave={() => setHoveredTab(null)}
+                                >
+                                    {item.label}
+                                </span>
+                            ) : (
+                                <Link
+                                    to={item.path}
+                                    className="text-xl text-white hover:text-highlight-from transition-colors"
+                                    onMouseEnter={() => setHoveredTab(item.key)}
+                                    onMouseLeave={() => setHoveredTab(null)}
+                                >
+                                    {item.label}
+                                </Link>
+                            )}
                         </Tooltip>
                     ))}
                 </div>
@@ -76,18 +83,22 @@ const Navbar: React.FC = () => {
                     {menuItems.map((item) => (
                         <Tooltip
                             key={item.key}
-                            title="Coming Soon"
+                            title={item.disabled ? "Coming Soon" : ""}
                             color="#222831"
                         >
-                            <div
-                                className={`py-4 border-b border-gray-700 text-lg font-medium ${
-                                    item.disabled
-                                        ? "text-gray-500"
-                                        : "text-white cursor-pointer hover:text-highlight-from"
-                                } transition-colors`}
-                            >
-                                {item.label}
-                            </div>
+                            {item.disabled ? (
+                                <div className="py-4 border-b border-gray-700 text-lg font-medium text-gray-500">
+                                    {item.label}
+                                </div>
+                            ) : (
+                                <Link
+                                    to={item.path}
+                                    className="py-4 border-b border-gray-700 text-lg font-medium text-white hover:text-highlight-from transition-colors"
+                                    onClick={() => setIsDrawerOpen(false)}
+                                >
+                                    {item.label}
+                                </Link>
+                            )}
                         </Tooltip>
                     ))}
                 </div>
