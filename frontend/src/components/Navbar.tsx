@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Tooltip, Drawer } from "antd";
 import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Link } from "react-router-dom";
 
 const Navbar: React.FC = () => {
     const [hoveredTab, setHoveredTab] = useState<string | null>(null);
@@ -8,17 +9,17 @@ const Navbar: React.FC = () => {
 
     const menuItems = [
         { key: "live", label: "Live Feed" },
-        { key: "manifesto", label: "Manifesto" },
+        { key: "manifesto", label: "Manifesto", disabled: true },
     ];
 
     return (
         <div className="fixed top-0 left-0 right-0 z-20 px-[5%] md:px-[8%] h-24 md:h-28 flex items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center">
-                <h1 className="text-white text-3xl md:text-4xl font-bold">
+            <Link to="/" className="flex items-center">
+                <h1 className="text-white text-3xl md:text-4xl font-bold hover:text-highlight-from transition-colors">
                     Fair²
                 </h1>
-            </div>
+            </Link>
 
             {/* 桌面端导航菜单 */}
             <div className="hidden md:flex items-center gap-12">
@@ -31,7 +32,11 @@ const Navbar: React.FC = () => {
                             color="#222831"
                         >
                             <span
-                                className="text-white text-xl cursor-pointer"
+                                className={`text-xl cursor-pointer ${
+                                    item.disabled
+                                        ? "text-gray-500"
+                                        : "text-white"
+                                }`}
                                 onMouseEnter={() => setHoveredTab(item.key)}
                                 onMouseLeave={() => setHoveredTab(null)}
                             >
@@ -40,9 +45,9 @@ const Navbar: React.FC = () => {
                         </Tooltip>
                     ))}
                 </div>
-                <span className="text-white text-xl cursor-pointer border-b-2 border-white hover:border-highlight-from transition-colors">
+                {/* <span className="text-white text-xl cursor-pointer border-b-2 border-white hover:border-highlight-from transition-colors">
                     Log in
-                </span>
+                </span> */}
             </div>
 
             {/* 移动端菜单按钮 */}
@@ -69,16 +74,22 @@ const Navbar: React.FC = () => {
             >
                 <div className="flex flex-col h-full bg-dark-bg text-white p-6">
                     {menuItems.map((item) => (
-                        <div
+                        <Tooltip
                             key={item.key}
-                            className="py-4 border-b border-gray-700 text-lg font-medium cursor-pointer hover:text-highlight-from transition-colors"
+                            title="Coming Soon"
+                            color="#222831"
                         >
-                            {item.label}
-                        </div>
+                            <div
+                                className={`py-4 border-b border-gray-700 text-lg font-medium ${
+                                    item.disabled
+                                        ? "text-gray-500"
+                                        : "text-white cursor-pointer hover:text-highlight-from"
+                                } transition-colors`}
+                            >
+                                {item.label}
+                            </div>
+                        </Tooltip>
                     ))}
-                    <div className="py-4 text-lg font-medium cursor-pointer hover:text-highlight-from transition-colors">
-                        Log in
-                    </div>
                 </div>
             </Drawer>
         </div>
