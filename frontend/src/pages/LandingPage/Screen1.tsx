@@ -71,45 +71,59 @@ const Screen1: React.FC = () => {
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 法官图片容器 - 居中定位 */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[50%] h-screen">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full md:w-[80%] lg:w-[50%] h-[60vh] md:h-screen opacity-30 md:opacity-100">
                 <div className="w-full h-full bg-[url('/assets/images/judge.png')] bg-contain bg-bottom bg-no-repeat" />
             </div>
 
             {/* 文本内容层 */}
-            <div className="relative z-10 flex justify-between w-full h-screen px-[8%]">
+            <div className="relative z-10 flex flex-col md:flex-row justify-between w-full h-screen px-[5%] md:px-[8%]">
+                {/* 移动端主标题块 - 仅在移动端显示 */}
+                <div className="md:hidden w-full flex flex-col items-center mt-[12vh] mb-8">
+                    <h1 className="text-white text-4xl font-extrabold mb-4 whitespace-normal text-center max-w-[320px]">
+                        MEET YOUR AI JUDGE
+                    </h1>
+                    <h2 className="text-white text-xl font-normal mb-6 text-center max-w-[320px]">
+                        Transparent, Fair, and Unbiased Contribution Arbitration
+                    </h2>
+                    <Button className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-lg font-bold px-5 py-3 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white">
+                        START ARBITRATION →
+                    </Button>
+                </div>
+
                 {/* 左侧文本块容器 */}
-                <div className="w-[30%] flex flex-col h-full relative">
+                <div className="w-full md:w-[30%] flex flex-col h-full relative">
                     {/* Block 1 - 左上，稍微往上 */}
-                    <div className="mt-[35vh] relative">
-                        <h2 className="text-white text-4xl font-normal mb-6 lg:text-3xl md:text-2xl">
+                    <div className="mt-[10vh] md:mt-[35vh] relative">
+                        <h2 className="text-white text-xl md:text-4xl font-normal mb-3 md:mb-6">
                             • Team Code Analysis
                         </h2>
-                        <p className="text-white text-2xl mb-6 lg:text-xl md:text-lg">
+                        <p className="text-white text-base md:text-2xl mb-3 md:mb-6 opacity-80">
                             Submit your GitHub repository, and our Fair² AI
                             analyzes Git history to evaluate code quality and
                             collaboration.
                         </p>
-                        {/* 热点分析矢量图 */}
-                        <div className="absolute -right-[70px] top-[80%] w-[140px] h-[140px] bg-[url('/assets/images/analysis-circles.png')] bg-contain bg-center bg-no-repeat z-20" />
+                        {/* 热点分析矢量图 - 移动端隐藏 */}
+                        <div className="hidden md:block absolute -right-[70px] top-[80%] w-[140px] h-[140px] bg-[url('/assets/images/analysis-circles.png')] bg-contain bg-center bg-no-repeat z-20" />
                     </div>
                     {/* Block 3 - 左下 */}
-                    <div className="mt-auto mb-[7vh]">
-                        <p className="text-white text-2xl font-bold lg:text-xl md:text-lg">
+                    <div className="mt-4 mb-4 md:mt-auto md:mb-[7vh]">
+                        <p className="text-white text-base md:text-2xl font-bold opacity-80">
                             Empowered by Eliza
                         </p>
                     </div>
                 </div>
 
-                {/* 右侧文本块容器 */}
-                <div className="w-[30%] flex flex-col h-full text-right">
+                {/* 右侧文本块容器 - 桌面端显示 */}
+                <div className="hidden md:flex w-[30%] flex-col h-full text-right">
                     {/* Block 2 - 右上 */}
-                    <div className="mt-[25vh] flex flex-col items-end">
-                        <h1 className="text-white text-5xl font-extrabold mb-6 lg:text-4xl md:text-3xl whitespace-nowrap">
+                    <div className="mt-[20vh] flex flex-col items-end">
+                        <h1 className="text-white text-5xl font-extrabold mb-6 whitespace-nowrap">
                             MEET YOUR AI JUDGE
                         </h1>
-                        <h2 className="text-white text-3xl font-normal mb-6 lg:text-2xl md:text-xl">
-                            Transparent, Fair, and Unbiased Contribution
-                            Arbitration
+                        <h2 className="text-white text-3xl font-normal mb-6 whitespace-nowrap">
+                            Transparent, Fair, and Unbiased
+                            <br />
+                            Contribution Arbitration
                         </h2>
                         <Button className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-2xl font-bold px-7 py-5 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white">
                             START ARBITRATION →
@@ -119,14 +133,27 @@ const Screen1: React.FC = () => {
                     <div className="mt-auto mb-[7vh]">
                         <h1
                             id="projects-count"
-                            className="text-white text-5xl font-extrabold mb-6 lg:text-4xl md:text-3xl"
+                            className="text-white text-5xl font-extrabold mb-6"
                         >
                             {count.toLocaleString()}+
                         </h1>
-                        <p className="text-white text-2xl font-bold lg:text-xl md:text-lg">
+                        <p className="text-white text-2xl font-bold">
                             Projects Resolved
                         </p>
                     </div>
+                </div>
+
+                {/* 统计数据 - 移动端显示在底部 */}
+                <div className="md:hidden w-full mt-auto mb-8 text-center">
+                    <h1
+                        id="projects-count-mobile"
+                        className="text-white text-4xl font-extrabold mb-3"
+                    >
+                        {count.toLocaleString()}+
+                    </h1>
+                    <p className="text-white text-lg font-bold">
+                        Projects Resolved
+                    </p>
                 </div>
             </div>
         </div>
