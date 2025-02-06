@@ -71,7 +71,7 @@ const Screen1: React.FC = () => {
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 法官图片容器 - 居中定位 */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[40%] h-screen">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[50%] h-screen">
                 <div className="w-full h-full bg-[url('/assets/images/judge.png')] bg-contain bg-bottom bg-no-repeat" />
             </div>
 
