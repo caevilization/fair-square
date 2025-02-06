@@ -49,31 +49,31 @@ const Screen2: React.FC = () => {
             {/* 右侧内容 */}
             <div className="w-2/3 h-full flex flex-col justify-center pl-[8%] relative z-10">
                 {/* 标题区域 */}
-                <div className="flex flex-col mb-12">
-                    <h1 className="text-7xl font-extrabold text-white mb-8 relative">
+                <div className="flex flex-col mb-8">
+                    <h1 className="text-5xl font-extrabold text-white mb-6 relative">
                         <span className="relative z-10">How it </span>
                         <span className="bg-gradient-to-r from-highlight-from to-highlight-to bg-clip-text text-transparent relative z-10">
                             Works
                         </span>
                         <span className="relative z-10">?</span>
-                        <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-2 h-16 bg-gradient-to-b from-highlight-from to-highlight-to rounded-full" />
+                        <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-highlight-from to-highlight-to rounded-full" />
                     </h1>
-                    <h3 className="text-5xl font-normal text-white">
+                    <h3 className="text-3xl font-normal text-white">
                         It's super easy to keep your team, fair and square, with
                         us.
                     </h3>
                 </div>
 
                 {/* 面板区域 */}
-                <div className="bg-dark-card rounded-lg shadow-lg p-12">
+                <div className="bg-dark-card rounded-lg shadow-lg p-8">
                     {/* 图片区域 */}
-                    <div className="flex gap-8 mb-12">
+                    <div className="flex gap-6 mb-8">
                         {steps.map((step, index) => (
                             <div
                                 key={index}
-                                className={`w-1/3 aspect-square rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-105 ${
+                                className={`w-1/3 aspect-square rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-105 ${
                                     index === currentSlide
-                                        ? "ring-4 ring-gradient-to-r from-highlight-from to-highlight-to"
+                                        ? "ring-3 ring-gradient-to-r from-highlight-from to-highlight-to"
                                         : ""
                                 }`}
                                 style={{
@@ -86,7 +86,7 @@ const Screen2: React.FC = () => {
                                             ? "solid"
                                             : "none",
                                     borderWidth:
-                                        index === currentSlide ? "4px" : "0",
+                                        index === currentSlide ? "3px" : "0",
                                 }}
                                 onClick={() => handleImageClick(index)}
                             >
@@ -100,7 +100,7 @@ const Screen2: React.FC = () => {
                     </div>
 
                     {/* 文字轮播区域 */}
-                    <div className="relative pb-8">
+                    <div className="relative pb-6">
                         <Carousel
                             ref={carouselRef}
                             autoplay
@@ -111,10 +111,10 @@ const Screen2: React.FC = () => {
                         >
                             {steps.map((step, index) => (
                                 <div key={index} className="font-exo">
-                                    <h2 className="text-6xl font-normal text-white mb-8 font-exo">
+                                    <h2 className="text-4xl font-normal text-white mb-6 font-exo">
                                         {step.title}
                                     </h2>
-                                    <p className="text-4xl text-white mb-8 font-exo">
+                                    <p className="text-2xl text-white mb-6 font-exo">
                                         {step.description}
                                     </p>
                                 </div>

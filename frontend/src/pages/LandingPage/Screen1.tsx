@@ -71,7 +71,7 @@ const Screen1: React.FC = () => {
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 法官图片容器 - 居中定位 */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[48%] h-screen">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[40%] h-screen">
                 <div className="w-full h-full bg-[url('/assets/images/judge.png')] bg-contain bg-bottom bg-no-repeat" />
             </div>
 
@@ -81,20 +81,20 @@ const Screen1: React.FC = () => {
                 <div className="w-[30%] flex flex-col h-full relative">
                     {/* Block 1 - 左上，稍微往上 */}
                     <div className="mt-[35vh] relative">
-                        <h2 className="text-white text-6xl font-normal mb-8 lg:text-5xl md:text-4xl">
+                        <h2 className="text-white text-4xl font-normal mb-6 lg:text-3xl md:text-2xl">
                             • Team Code Analysis
                         </h2>
-                        <p className="text-white text-4xl mb-8 lg:text-3xl md:text-2xl">
+                        <p className="text-white text-2xl mb-6 lg:text-xl md:text-lg">
                             Submit your GitHub repository, and our Fair² AI
                             analyzes Git history to evaluate code quality and
                             collaboration.
                         </p>
                         {/* 热点分析矢量图 */}
-                        <div className="absolute -right-[100px] top-[80%] w-[200px] h-[200px] bg-[url('/assets/images/analysis-circles.png')] bg-contain bg-center bg-no-repeat z-20" />
+                        <div className="absolute -right-[70px] top-[80%] w-[140px] h-[140px] bg-[url('/assets/images/analysis-circles.png')] bg-contain bg-center bg-no-repeat z-20" />
                     </div>
                     {/* Block 3 - 左下 */}
                     <div className="mt-auto mb-[7vh]">
-                        <p className="text-white text-4xl font-bold lg:text-3xl md:text-2xl">
+                        <p className="text-white text-2xl font-bold lg:text-xl md:text-lg">
                             Empowered by Eliza
                         </p>
                     </div>
@@ -104,14 +104,14 @@ const Screen1: React.FC = () => {
                 <div className="w-[30%] flex flex-col h-full text-right">
                     {/* Block 2 - 右上 */}
                     <div className="mt-[25vh] flex flex-col items-end">
-                        <h1 className="text-white text-7xl font-extrabold mb-8 lg:text-6xl md:text-5xl whitespace-nowrap">
+                        <h1 className="text-white text-5xl font-extrabold mb-6 lg:text-4xl md:text-3xl whitespace-nowrap">
                             MEET YOUR AI JUDGE
                         </h1>
-                        <h2 className="text-white text-5xl font-normal mb-8 lg:text-4xl md:text-3xl">
+                        <h2 className="text-white text-3xl font-normal mb-6 lg:text-2xl md:text-xl">
                             Transparent, Fair, and Unbiased Contribution
                             Arbitration
                         </h2>
-                        <Button className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-4xl font-bold px-10 py-8 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white">
+                        <Button className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-2xl font-bold px-7 py-5 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white">
                             START ARBITRATION →
                         </Button>
                     </div>
@@ -119,11 +119,11 @@ const Screen1: React.FC = () => {
                     <div className="mt-auto mb-[7vh]">
                         <h1
                             id="projects-count"
-                            className="text-white text-7xl font-extrabold mb-8 lg:text-6xl md:text-5xl"
+                            className="text-white text-5xl font-extrabold mb-6 lg:text-4xl md:text-3xl"
                         >
                             {count.toLocaleString()}+
                         </h1>
-                        <p className="text-white text-4xl font-bold lg:text-3xl md:text-2xl">
+                        <p className="text-white text-2xl font-bold lg:text-xl md:text-lg">
                             Projects Resolved
                         </p>
                     </div>
