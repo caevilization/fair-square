@@ -2,7 +2,7 @@ const simpleGit = require("simple-git");
 const path = require("path");
 const fs = require("fs").promises;
 const axios = require("axios");
-const { Repository, AnalysisTask } = require("../models");
+const { Repository } = require("../models");
 const logger = require("../config/logger");
 
 // Extract repository information from GitHub URL
@@ -157,12 +157,6 @@ exports.addRepository = async (req, res) => {
             sizeInMB: parseFloat(limits.sizeInMB.toFixed(2)),
             totalCommits: limits.totalCommits,
             totalContributors: limits.totalContributors,
-        });
-
-        // Create analysis task
-        await AnalysisTask.create({
-            repositoryId: repository._id,
-            status: "pending",
         });
 
         res.status(201).json({

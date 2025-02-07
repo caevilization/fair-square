@@ -2,7 +2,13 @@ const cron = require("node-cron");
 const simpleGit = require("simple-git");
 const path = require("path");
 const fs = require("fs").promises;
-const { Repository, AnalysisTask } = require("../models");
+const {
+    Repository,
+    AnalysisTask,
+    Milestone,
+    Contribution,
+    Contributor,
+} = require("../models");
 const logger = require("../config/logger");
 
 // Function to get commit details
@@ -330,6 +336,10 @@ async function processRepository(repository) {
             return;
         }
 
+        // 更新状态为分析中
+        repository.status = "analyzing";
+        await repository.save();
+
         // 将相对路径转换为绝对路径
         const absolutePath = path.join(process.cwd(), repository.localPath);
         logger.info(`Processing repository at path: ${absolutePath}`);
@@ -373,16 +383,126 @@ async function processRepository(repository) {
         // 生成分析报告
         await generateAnalysisReports(commitDetails, repository.localPath);
 
-        // TODO: 在这里可以进行数据分析和存储
-        // 例如：
-        // - 按作者统计贡献
-        // - 分析文件变更模式
-        // - 计算代码复杂度变化
-        // - 识别关键提交
+        // 计算总分数
+        const totalCommits = commitDetails.length;
+        let totalLineChanges = 0;
+        const authorStats = {};
+
+        // 统计每个作者的贡献
+        commitDetails.forEach((commit) => {
+            const author = commit.author;
+            const email = commit.email;
+            const key = `${author}|${email}`;
+
+            if (!authorStats[key]) {
+                authorStats[key] = {
+                    name: author,
+                    email: email,
+                    commits: 0,
+                    additions: 0,
+                    deletions: 0,
+                    totalChanges: 0,
+                };
+            }
+
+            authorStats[key].commits++;
+            commit.files.forEach((file) => {
+                authorStats[key].additions += file.additions;
+                authorStats[key].deletions += file.deletions;
+                authorStats[key].totalChanges +=
+                    file.additions + file.deletions;
+                totalLineChanges += file.additions + file.deletions;
+            });
+        });
+
+        // 计算总 squares
+        const totalSquares = Math.floor(totalCommits * 500 + totalLineChanges);
+
+        // 创建里程碑
+        const milestone = await Milestone.create({
+            repositoryId: repository._id,
+            title: "Initial Milestone",
+            description: "TODO: Initial analysis of repository contributions",
+            squareReward: totalSquares,
+            startCommit: logs.all[logs.all.length - 1].hash,
+            endCommit: logs.all[0].hash,
+            startDate: new Date(logs.all[logs.all.length - 1].date),
+            endDate: new Date(logs.all[0].date),
+            status: "completed",
+        });
+
+        // 为每个作者创建或更新贡献者记录并计算分配
+        for (const [key, stats] of Object.entries(authorStats)) {
+            // 查找或创建贡献者
+            let contributor = await Contributor.findOne({
+                email: stats.email,
+            });
+
+            if (!contributor) {
+                contributor = await Contributor.create({
+                    githubUsername: stats.email.split("@")[0], // 临时使用
+                    name: stats.name,
+                    email: stats.email,
+                    avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                        stats.email
+                    )}`,
+                    totalSquares: 0,
+                    repositories: [repository._id],
+                });
+            } else if (!contributor.repositories.includes(repository._id)) {
+                contributor.repositories.push(repository._id);
+                await contributor.save();
+            }
+
+            // 计算贡献者的 squares
+            const commitWeight = (stats.commits / totalCommits) * 0.5;
+            const changesWeight = (stats.totalChanges / totalLineChanges) * 0.5;
+            const contributorSquares = Math.floor(
+                totalSquares * (commitWeight + changesWeight)
+            );
+
+            // 创建贡献记录
+            await Contribution.create({
+                milestoneId: milestone._id,
+                repositoryId: repository._id,
+                contributorId: contributor._id,
+                squareCount: contributorSquares,
+                commits: commitDetails
+                    .filter((commit) => commit.email === stats.email)
+                    .map((commit) => ({
+                        hash: commit.hash,
+                        message: commit.message,
+                        date: new Date(commit.date),
+                        filesChanged: commit.files.length,
+                        additions: commit.files.reduce(
+                            (sum, file) => sum + file.additions,
+                            0
+                        ),
+                        deletions: commit.files.reduce(
+                            (sum, file) => sum + file.deletions,
+                            0
+                        ),
+                    })),
+            });
+
+            // 更新贡献者的总 squares
+            contributor.totalSquares += contributorSquares;
+            await contributor.save();
+        }
+
+        // 更新仓库状态为等待共识
+        repository.status = "handshaking";
+        repository.lastAnalyzed = new Date();
+        repository.totalSquares = totalSquares;
+        await repository.save();
 
         logger.info(`Completed analysis for repository: ${repository.name}`);
     } catch (error) {
         logger.error(`Error processing repository ${repository._id}:`, error);
+
+        // 更新仓库状态为失败
+        repository.status = "failed";
+        await repository.save();
     }
 }
 

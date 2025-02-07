@@ -1,0 +1,72 @@
+#######################################
+# Judge Management API Tests
+#######################################
+
+### [1.1] List All Judges
+GET {{baseUrl}}/judges
+Content-Type: application/json
+
+### [1.2] Get Judge Details
+GET {{baseUrl}}/judges/{{repositoryId}}
+Content-Type: application/json
+
+### [1.3] Get Appeal List
+GET {{baseUrl}}/judges/{{repositoryId}}/appeals
+Content-Type: application/json
+
+### [1.4] Get Appeal Messages
+GET {{baseUrl}}/judges/{{repositoryId}}/appeals/{{appealId}}/messages
+Content-Type: application/json
+
+### [1.5] Create Appeal Message
+POST {{baseUrl}}/judges/{{repositoryId}}/appeals/{{appealId}}/messages
+Content-Type: application/json
+
+{
+    "content": "I believe my contribution to the documentation should be valued more."
+}
+
+### [1.6] Create Decision
+POST {{baseUrl}}/judges/{{repositoryId}}/decisions
+Content-Type: application/json
+
+{
+    "decision": "approve",
+    "reason": "The distribution looks fair based on both quantity and quality of contributions."
+}
+
+### [1.7] Vote on Appeal
+POST {{baseUrl}}/judges/{{repositoryId}}/appeals/{{appealId}}/vote
+Content-Type: application/json
+
+{
+    "vote": "pro"
+}
+
+### [1.8] Vote on Message
+POST {{baseUrl}}/judges/{{repositoryId}}/appeals/{{appealId}}/messages/{{messageId}}/vote
+Content-Type: application/json
+
+### [1.9] Veto Message
+POST {{baseUrl}}/judges/{{repositoryId}}/appeals/{{appealId}}/messages/{{messageId}}/veto
+Content-Type: application/json
+
+#######################################
+# Test with OSSU Math Repository
+#######################################
+
+### [2.1] Add OSSU Math Repository
+POST {{baseUrl}}/repositories
+Content-Type: application/json
+
+{
+    "url": "https://github.com/ossu/math"
+}
+
+### [2.2] Get Repository Status
+GET {{baseUrl}}/repositories/{{repositoryId}}
+Content-Type: application/json
+
+### [2.3] Get Judge Details After Analysis
+GET {{baseUrl}}/judges/{{repositoryId}}
+Content-Type: application/json 

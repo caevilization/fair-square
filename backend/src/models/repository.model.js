@@ -21,7 +21,13 @@ const repositorySchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["pending", "analyzing", "completed", "failed"],
+            enum: [
+                "pending",
+                "analyzing",
+                "handshaking",
+                "completed",
+                "failed",
+            ],
             default: "pending",
         },
         localPath: {
@@ -32,6 +38,18 @@ const repositorySchema = new mongoose.Schema(
             type: Number,
             required: true,
             min: 0,
+        },
+        totalCommits: {
+            type: Number,
+            default: 0,
+        },
+        totalContributors: {
+            type: Number,
+            default: 0,
+        },
+        totalSquares: {
+            type: Number,
+            default: 0,
         },
     },
     {
