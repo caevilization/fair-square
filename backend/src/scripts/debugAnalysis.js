@@ -6,10 +6,10 @@ const logger = require("../config/logger");
 
 async function debugAnalysis() {
     try {
-        // 连接数据库
+        // Connect to the database
         await connectDB();
 
-        // 获取一个待处理的仓库
+        // Get a pending repository
         const repository = await Repository.findOne({ status: "pending" });
 
         if (!repository) {
@@ -19,7 +19,7 @@ async function debugAnalysis() {
 
         logger.info(`Starting analysis for repository: ${repository.name}`);
 
-        // 执行分析
+        // Perform analysis
         await processRepository(repository);
 
         logger.info("Analysis completed");
@@ -30,5 +30,5 @@ async function debugAnalysis() {
     }
 }
 
-// 运行调试
+// Run the debug
 debugAnalysis();

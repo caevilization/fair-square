@@ -13,25 +13,25 @@ const {
     Decision,
 } = require("../models");
 
-// 设置更长的超时时间
+// Set longer timeout
 jest.setTimeout(30000);
 
 let mongoServer;
 
-// 在所有测试开始前连接到内存数据库
+// Connect to in-memory database before all tests
 beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
     await mongoose.connect(mongoUri);
 });
 
-// 在所有测试结束后断开连接
+// Disconnect after all tests
 afterAll(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
 });
 
-// 在每个测试前清理数据
+// Clean data before each test
 beforeEach(async () => {
     await Promise.all([
         Repository.deleteMany({}),
@@ -44,12 +44,12 @@ beforeEach(async () => {
     ]);
 });
 
-describe("Judge API 测试", () => {
+describe("Judge API Test", () => {
     let testRepo, testContributor, testMilestone, testAppeal, testMessage;
 
-    // 在每个测试前创建基础测试数据
+    // Create basic test data before each test
     beforeEach(async () => {
-        // 创建测试仓库
+        // Create test repository
         testRepo = await Repository.create({
             url: "https://github.com/test/repo",
             name: "test-repo",
@@ -61,7 +61,7 @@ describe("Judge API 测试", () => {
             totalSquares: 1000,
         });
 
-        // 创建测试贡献者
+        // Create test contributor
         testContributor = await Contributor.create({
             githubUsername: "test-user",
             name: "Test User",
@@ -71,7 +71,7 @@ describe("Judge API 测试", () => {
             repositories: [testRepo._id],
         });
 
-        // 创建测试里程碑
+        // Create test milestone
         testMilestone = await Milestone.create({
             repositoryId: testRepo._id,
             title: "Initial Milestone",
@@ -84,7 +84,7 @@ describe("Judge API 测试", () => {
             status: "completed",
         });
 
-        // 创建测试贡献记录
+        // Create test contribution
         await Contribution.create({
             milestoneId: testMilestone._id,
             repositoryId: testRepo._id,
@@ -93,7 +93,7 @@ describe("Judge API 测试", () => {
             commits: [],
         });
 
-        // 创建测试申诉
+        // Create test appeal
         testAppeal = await Appeal.create({
             repositoryId: testRepo._id,
             milestoneId: testMilestone._id,
@@ -104,30 +104,30 @@ describe("Judge API 测试", () => {
             conVotes: [],
         });
 
-        // 创建测试消息
+        // Create test message
         testMessage = await AppealMessage.create({
             appealId: testAppeal._id,
             contributorId: testContributor._id,
             content: "Test message content",
         });
 
-        // 添加 express 中间件
+        // Add express middleware
         app.use(express.json());
         app.use(express.urlencoded({ extended: true }));
 
-        // 模拟认证中间件
+        // Simulate authentication middleware
         app.use((req, res, next) => {
             req.user = { _id: testContributor._id };
             next();
         });
 
-        // 加载路由
+        // Load routes
         const judgeRoutes = require("../routes/judge.routes");
         app.use("/api/judges", judgeRoutes);
     });
 
     describe("GET /api/judges", () => {
-        it("应该返回处于 handshaking 状态的仓库列表", async () => {
+        it("should return a list of repositories in handshaking status", async () => {
             const res = await request(app).get("/api/judges");
             expect(res.status).toBe(200);
             expect(res.body.data).toHaveLength(1);
@@ -135,7 +135,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data[0].status).toBe("handshaking");
         });
 
-        it("不应该返回其他状态的仓库", async () => {
+        it("should not return repositories in other statuses", async () => {
             await Repository.findByIdAndUpdate(testRepo._id, {
                 status: "pending",
             });
@@ -146,14 +146,14 @@ describe("Judge API 测试", () => {
     });
 
     describe("GET /api/judges/:repositoryId", () => {
-        it("应该返回包含项目简介的 judge 详情", async () => {
+        it("should return judge details with project brief", async () => {
             const res = await request(app).get(`/api/judges/${testRepo._id}`);
             expect(res.status).toBe(200);
             expect(res.body.data.projectBrief).toBeDefined();
             expect(res.body.data.projectBrief.name).toBe("test-repo");
         });
 
-        it("应该返回包含进度树的 judge 详情", async () => {
+        it("should return judge details with progress tree", async () => {
             const res = await request(app).get(`/api/judges/${testRepo._id}`);
             expect(res.status).toBe(200);
             expect(res.body.data.progressTree).toBeDefined();
@@ -163,7 +163,7 @@ describe("Judge API 测试", () => {
             );
         });
 
-        it("对于不存在的仓库应该返回 404", async () => {
+        it("should return 404 for non-existent repository", async () => {
             const res = await request(app).get(
                 `/api/judges/${new mongoose.Types.ObjectId()}`
             );
@@ -172,7 +172,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("GET /api/judges/:repositoryId/appeals", () => {
-        it("应该返回申诉列表", async () => {
+        it("should return a list of appeals", async () => {
             const res = await request(app).get(
                 `/api/judges/${testRepo._id}/appeals`
             );
@@ -181,7 +181,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data[0].title).toBe("Test Appeal");
         });
 
-        it("应该包含投票统计信息", async () => {
+        it("should include vote count information", async () => {
             await Appeal.findByIdAndUpdate(testAppeal._id, {
                 $push: { proVotes: { contributorId: testContributor._id } },
             });
@@ -196,7 +196,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("GET /api/judges/:repositoryId/appeals/:appealId/messages", () => {
-        it("应该返回申诉消息列表", async () => {
+        it("should return a list of appeal messages", async () => {
             const res = await request(app).get(
                 `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/messages`
             );
@@ -205,7 +205,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data[0].content).toBe("Test message content");
         });
 
-        it("应该包含用户信息", async () => {
+        it("should include user information", async () => {
             const res = await request(app).get(
                 `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/messages`
             );
@@ -216,7 +216,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("POST /api/judges/:repositoryId/appeals/:appealId/messages", () => {
-        it("应该创建新的申诉消息", async () => {
+        it("should create a new appeal message", async () => {
             const res = await request(app)
                 .post(
                     `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/messages`
@@ -228,7 +228,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data.content).toBe("New test message");
         });
 
-        it("应该关联正确的用户信息", async () => {
+        it("should associate with correct user information", async () => {
             const res = await request(app)
                 .post(
                     `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/messages`
@@ -242,7 +242,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("POST /api/judges/:repositoryId/decisions", () => {
-        it("应该创建新的决策", async () => {
+        it("should create a new decision", async () => {
             const res = await request(app)
                 .post(`/api/judges/${testRepo._id}/decisions`)
                 .send({
@@ -254,7 +254,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data.decision).toBe("approve");
         });
 
-        it("不应该允许重复决策", async () => {
+        it("should not allow duplicate decisions", async () => {
             await Decision.create({
                 repositoryId: testRepo._id,
                 contributorId: testContributor._id,
@@ -275,7 +275,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("POST /api/judges/:repositoryId/appeals/:appealId/vote", () => {
-        it("应该记录支持票", async () => {
+        it("should record a pro vote", async () => {
             const res = await request(app)
                 .post(
                     `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/vote`
@@ -287,7 +287,7 @@ describe("Judge API 测试", () => {
             expect(appeal.conVotes).toHaveLength(0);
         });
 
-        it("应该记录反对票", async () => {
+        it("should record a con vote", async () => {
             const res = await request(app)
                 .post(
                     `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/vote`
@@ -299,7 +299,7 @@ describe("Judge API 测试", () => {
             expect(appeal.conVotes).toHaveLength(1);
         });
 
-        it("不应该允许重复投票", async () => {
+        it("should not allow duplicate votes", async () => {
             await request(app)
                 .post(
                     `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/vote`
@@ -316,7 +316,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("POST /api/judges/:repositoryId/appeals/:appealId/messages/:messageId/vote", () => {
-        it("应该为消息添加投票", async () => {
+        it("should add a vote to the message", async () => {
             const res = await request(app).post(
                 `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/messages/${testMessage._id}/vote`
             );
@@ -324,7 +324,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data.votes).toBe(1);
         });
 
-        it("不应该允许重复投票", async () => {
+        it("should not allow duplicate votes", async () => {
             await AppealMessage.findByIdAndUpdate(testMessage._id, {
                 $push: { votes: { contributorId: testContributor._id } },
             });
@@ -337,7 +337,7 @@ describe("Judge API 测试", () => {
     });
 
     describe("POST /api/judges/:repositoryId/appeals/:appealId/messages/:messageId/veto", () => {
-        it("应该为消息添加否决票", async () => {
+        it("should add a veto to the message", async () => {
             const res = await request(app).post(
                 `/api/judges/${testRepo._id}/appeals/${testAppeal._id}/messages/${testMessage._id}/veto`
             );
@@ -345,7 +345,7 @@ describe("Judge API 测试", () => {
             expect(res.body.data.vetoes).toBe(1);
         });
 
-        it("不应该允许重复否决", async () => {
+        it("should not allow duplicate vetoes", async () => {
             await AppealMessage.findByIdAndUpdate(testMessage._id, {
                 $push: { vetoes: { contributorId: testContributor._id } },
             });

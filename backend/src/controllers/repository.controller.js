@@ -39,7 +39,7 @@ async function checkRepoLimits(owner, name) {
         const sizeInKB = response.data.size;
         const sizeInMB = sizeInKB / 1024;
 
-        // 检查仓库大小
+        // Check repository size
         if (sizeInMB > 10) {
             throw new Error(
                 `Repository size (${sizeInMB.toFixed(
@@ -48,7 +48,7 @@ async function checkRepoLimits(owner, name) {
             );
         }
 
-        // 获取提交数量
+        // Get number of commits
         const commitsResponse = await axios.get(
             `https://api.github.com/repos/${owner}/${name}/commits?per_page=1`,
             {
@@ -69,7 +69,7 @@ async function checkRepoLimits(owner, name) {
             );
         }
 
-        // 获取贡献者数量
+        // Get number of contributors
         const contributorsResponse = await axios.get(
             `https://api.github.com/repos/${owner}/${name}/contributors?per_page=1`,
             {

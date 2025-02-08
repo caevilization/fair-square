@@ -40,6 +40,18 @@ const appealMessageSchema = new mongoose.Schema(
                 },
             },
         ],
+        voterIds: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Contributor",
+            },
+        ],
+        vetoerIds: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Contributor",
+            },
+        ],
     },
     {
         timestamps: true,

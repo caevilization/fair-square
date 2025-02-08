@@ -16,7 +16,7 @@ const ListPage: React.FC = () => {
                 const data = await judgeApi.listJudges();
                 setRepositories(data);
             } catch (error) {
-                message.error("获取仓库列表失败");
+                message.error("Failed to fetch repository list");
                 console.error("Failed to fetch repositories:", error);
             } finally {
                 setLoading(false);
@@ -172,7 +172,7 @@ const ListPage: React.FC = () => {
 
                     {repositories.length === 0 && (
                         <div className="text-center text-gray-400 py-8">
-                            暂无待处理的仓库
+                            No repositories to process
                         </div>
                     )}
                 </div>

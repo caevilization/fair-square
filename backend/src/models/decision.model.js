@@ -32,7 +32,7 @@ const decisionSchema = new mongoose.Schema(
     }
 );
 
-// 确保每个贡献者在每个里程碑只能有一个决定
+// Ensure each contributor can only have one decision per milestone
 decisionSchema.index(
     { repositoryId: 1, milestoneId: 1, createdBy: 1 },
     { unique: true }

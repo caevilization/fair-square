@@ -405,7 +405,8 @@ exports.voteMessage = async (req, res) => {
             return res.status(409).json({ message: "Already voted" });
         }
 
-        message.votes.push({ contributorId });
+        // Add new vote
+        message.votes.push({ contributorId, timestamp: new Date() });
         await message.save();
 
         res.json({
@@ -440,7 +441,8 @@ exports.vetoMessage = async (req, res) => {
             return res.status(409).json({ message: "Already vetoed" });
         }
 
-        message.vetoes.push({ contributorId });
+        // Add new veto
+        message.vetoes.push({ contributorId, timestamp: new Date() });
         await message.save();
 
         res.json({
@@ -463,7 +465,7 @@ exports.vetoMessage = async (req, res) => {
 exports.listJudges = async (req, res) => {
     try {
         // Get all repositories in handshaking status
-        const repositories = await Repository.find({ status: "handshaking" })
+        const repositories = await Repository.find()
             .select("-__v")
             .sort("-lastAnalyzed");
 

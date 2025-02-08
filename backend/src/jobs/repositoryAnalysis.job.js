@@ -15,8 +15,8 @@ const md5 = require("md5");
 // Function to get commit details
 async function getCommitDetails(git, commitHash) {
     try {
-        // 分别获取提交信息和文件变更
-        // 1. 获取提交基本信息，使用 %B 获取完整提交信息，避免转义问题
+        // Get commit details and file changes separately
+        // 1. Get commit basic information, use %B to get complete commit message to avoid escape problem
         const [rawHash, rawAuthor, rawEmail, rawDate, rawMessage] =
             await Promise.all([
                 git.raw(["show", "-s", "--format=%H", commitHash]),
@@ -26,7 +26,7 @@ async function getCommitDetails(git, commitHash) {
                 git.raw(["show", "-s", "--format=%B", commitHash]),
             ]);
 
-        // 构建提交信息对象
+        // Build commit information object
         const commit = {
             hash: rawHash.trim(),
             author: rawAuthor.trim(),
@@ -35,7 +35,7 @@ async function getCommitDetails(git, commitHash) {
             message: rawMessage.trim(),
         };
 
-        // 2. 获取文件变更列表
+        // 2. Get file change list
         const changedFiles = await git.raw([
             "diff-tree",
             "--no-commit-id",
@@ -44,7 +44,7 @@ async function getCommitDetails(git, commitHash) {
             commitHash,
         ]);
 
-        // 解析文件变更信息
+        // Parse file change information
         const fileChanges = changedFiles
             .split("\n")
             .filter((line) => line.trim())
@@ -53,29 +53,29 @@ async function getCommitDetails(git, commitHash) {
                 return { status, file };
             });
 
-        // 3. 获取文件变更统计
+        // 3. Get file change statistics
         let stats;
         try {
-            // 尝试获取与父提交的差异
+            // Try to get the difference with the parent commit
             stats = await git.raw([
                 "diff",
                 "--numstat",
                 `${commitHash}^..${commitHash}`,
             ]);
         } catch (error) {
-            // 如果是第一个提交，获取完整文件统计
+            // If it is the first commit, get the complete file statistics
             logger.info(
                 `First commit detected for ${commitHash}, using special handling`
             );
             stats = await git.raw([
                 "show",
                 "--numstat",
-                "--format=", // 空格式，只显示统计信息
+                "--format=", // Empty format, only display statistics
                 commitHash,
             ]);
         }
 
-        // 解析文件变更统计
+        // Parse file change statistics
         const fileStats = stats
             .split("\n")
             .filter((line) => line.trim())
@@ -88,13 +88,13 @@ async function getCommitDetails(git, commitHash) {
                 };
             });
 
-        // 4. 获取每个文件的具体代码变更
+        // 4. Get specific code changes for each file
         const fileDetails = await Promise.all(
             fileStats.map(async (file) => {
                 try {
                     let patch;
                     try {
-                        // 尝试获取与父提交的差异
+                        // Try to get the difference with the parent commit
                         patch = await git.show([
                             "--patch",
                             "--unified=3",
@@ -103,7 +103,7 @@ async function getCommitDetails(git, commitHash) {
                             file.file,
                         ]);
                     } catch (error) {
-                        // 如果是第一个提交，获取完整文件内容作为添加的内容
+                        // If it is the first commit, get the complete file content as added content
                         patch = await git.show([
                             "--patch",
                             "--unified=3",
@@ -113,7 +113,7 @@ async function getCommitDetails(git, commitHash) {
                         ]);
                     }
 
-                    // 解析变更内容
+                    // Parse the change content
                     const changes = patch
                         .split("\n")
                         .filter(
@@ -127,7 +127,7 @@ async function getCommitDetails(git, commitHash) {
                         ...file,
                         status:
                             fileChanges.find((f) => f.file === file.file)
-                                ?.status || "A", // 对于第一个提交，默认为添加
+                                ?.status || "A", // For the first commit, default to added
                         patch: changes,
                         chunks: changes
                             .split(/^@@.+@@$/m)
@@ -222,7 +222,7 @@ function formatAuthorContributions(authorStats) {
 // Function to generate analysis reports (both detailed and summary)
 async function generateAnalysisReports(commitDetails, repoPath) {
     try {
-        // 创建报告目录
+        // Create reports directory
         const reportsDir = path.join(process.cwd(), "reports");
         await fs.mkdir(reportsDir, { recursive: true });
 
@@ -236,11 +236,11 @@ async function generateAnalysisReports(commitDetails, repoPath) {
             `${repoName}.summary.txt`
         );
 
-        // 计算作者贡献统计
+        // Calculate author contributions
         const authorStats = calculateAuthorContributions(commitDetails);
         const authorContributions = formatAuthorContributions(authorStats);
 
-        // 生成详细报告内容
+        // Generate detailed report content
         const detailedContent = `Repository Analysis Report (Detailed)
 =================================
 
@@ -274,7 +274,7 @@ ${filesInfo}
     })
     .join("\n\n")}`;
 
-        // 生成摘要报告内容
+        // Generate summary report content
         const summaryContent = `Repository Analysis Report (Summary)
 ================================
 
@@ -305,7 +305,7 @@ ${filesInfo}
     })
     .join("\n\n")}`;
 
-        // 写入报告文件
+        // Write to report files
         await Promise.all([
             fs.writeFile(detailedReportPath, detailedContent, "utf8"),
             fs.writeFile(summaryReportPath, summaryContent, "utf8"),
@@ -337,18 +337,18 @@ async function processRepository(repository) {
             return;
         }
 
-        // 更新状态为分析中
+        // Update status to analyzing
         repository.status = "analyzing";
         await repository.save();
 
-        // 将相对路径转换为绝对路径
+        // Convert relative path to absolute path
         const absolutePath = path.join(process.cwd(), repository.localPath);
         logger.info(`Processing repository at path: ${absolutePath}`);
 
-        // 初始化 git 实例
+        // Initialize git instance
         const git = simpleGit(absolutePath);
 
-        // 尝试切换到主分支（main 或 master）
+        // Try to switch to the main branch (main or master)
         try {
             await git.checkout("main");
             logger.info("Switched to main branch");
@@ -363,13 +363,13 @@ async function processRepository(repository) {
             }
         }
 
-        // 获取所有提交历史
+        // Get all commit history
         const logs = await git.log();
 
-        // 存储每个提交的详细信息
+        // Store detailed information of each commit
         const commitDetails = [];
 
-        // 获取每个提交的详细信息
+        // Get detailed information of each commit
         for (const commit of logs.all) {
             const details = await getCommitDetails(git, commit.hash);
             commitDetails.push(details);
@@ -381,15 +381,15 @@ async function processRepository(repository) {
             );
         }
 
-        // 生成分析报告
+        // Generate analysis reports
         await generateAnalysisReports(commitDetails, repository.localPath);
 
-        // 计算总分数
+        // Calculate total score
         const totalCommits = commitDetails.length;
         let totalLineChanges = 0;
         const authorStats = {};
 
-        // 统计每个作者的贡献
+        // Calculate contributions of each author
         commitDetails.forEach((commit) => {
             const author = commit.author;
             const email = commit.email;
@@ -416,10 +416,10 @@ async function processRepository(repository) {
             });
         });
 
-        // 计算总 squares
+        // Calculate total squares
         const totalSquares = Math.floor(totalCommits * 500 + totalLineChanges);
 
-        // 创建里程碑
+        // Create milestone
         const milestone = await Milestone.create({
             repositoryId: repository._id,
             title: "Initial Milestone",
@@ -432,10 +432,10 @@ async function processRepository(repository) {
             status: "completed",
         });
 
-        // 更新贡献者统计
+        // Update contributor statistics
         const contributors = [];
 
-        // 处理每个贡献者
+        // Process each contributor
         for (const [email, stats] of Object.entries(authorStats)) {
             const contributor = await Contributor.findOneAndUpdate(
                 { email },
@@ -458,7 +458,7 @@ async function processRepository(repository) {
             contributors.push(contributor);
         }
 
-        // 更新仓库信息
+        // Update repository information
         await Repository.findByIdAndUpdate(repository._id, {
             status: "handshaking",
             lastAnalyzed: new Date(),
