@@ -333,8 +333,8 @@ async function generateFakeData() {
                 random(3, 5)
             );
 
-            // Create 1-3 milestones
-            const milestoneCount = random(1, 3);
+            // Create 2-4 milestones
+            const milestoneCount = random(2, 4);
             for (let i = 0; i < milestoneCount; i++) {
                 const milestone = await Milestone.create({
                     repositoryId: repository._id,
@@ -424,7 +424,7 @@ async function generateFakeData() {
                 }
 
                 // Create 0-2 appeals for each milestone
-                const appealCount = random(0, 2);
+                const appealCount = random(1, 2);
                 for (let j = 0; j < appealCount; j++) {
                     const appeal = await Appeal.create({
                         repositoryId: repository._id,
@@ -516,8 +516,8 @@ async function generateFakeData() {
                         }
                     }
 
-                    // Create 0-2 messages for the appeal
-                    const messageCount = random(0, 2);
+                    // Create 1-2 messages for the appeal
+                    const messageCount = random(1, 2);
                     for (let m = 0; m < messageCount; m++) {
                         await AppealMessage.create({
                             appealId: appeal._id,
