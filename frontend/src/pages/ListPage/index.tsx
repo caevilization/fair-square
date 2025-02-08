@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { judgeApi, type Repository } from "@/services/api";
 import { Spin, message } from "antd";
+import ReactLoading from "react-loading";
 
 const ListPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -28,7 +29,12 @@ const ListPage: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-dark-bg font-exo flex items-center justify-center">
-                <Spin size="large" />
+                <ReactLoading
+                    type="bars"
+                    color="#ffd369"
+                    height={100}
+                    width={100}
+                />
             </div>
         );
     }

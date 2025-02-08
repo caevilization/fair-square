@@ -14,8 +14,10 @@ exports.getJudgeDetail = async (req, res) => {
     try {
         const { repositoryId } = req.params;
 
-        // 获取仓库信息
-        const repository = await Repository.findById(repositoryId);
+        // 获取仓库信息，并填充memberIds
+        const repository = await Repository.findById(repositoryId).populate(
+            "memberIds"
+        );
         if (!repository) {
             return res.status(404).json({ message: "Repository not found" });
         }
@@ -37,6 +39,7 @@ exports.getJudgeDetail = async (req, res) => {
                     ),
                     description: milestone.description,
                     allocations: contributions.map((contribution) => ({
+                        id: contribution.contributorId._id,
                         avatar: contribution.contributorId.avatarUrl,
                         name: contribution.contributorId.name,
                         email: contribution.contributorId.email,
@@ -45,48 +48,51 @@ exports.getJudgeDetail = async (req, res) => {
                                 milestone.squareReward) *
                                 100
                         ),
-                        contribution: `Contributed ${contribution.commits.length} commits`,
+                        contribution: contribution.commits
+                            .map((commit) => commit.message)
+                            .join(", "),
                         squares: contribution.squareCount,
                     })),
                 };
             })
         );
 
-        // 获取共识信息
+        // 获取决策信息
         const decisions = await Decision.find({ repositoryId }).populate(
-            "contributorId"
+            "createdBy"
         );
+
+        // 构建共识数据
         const consensusData = {
-            progress:
-                Math.round(
-                    (decisions.filter((d) => d.decision === "approve").length /
-                        decisions.length) *
-                        100
-                ) || 0,
-            threshold: 80, // 可以从配置或其他地方获取
-            members: decisions.map((decision) => ({
-                id: decision.contributorId._id,
-                name: decision.contributorId.name,
-                avatar: decision.contributorId.avatarUrl,
+            progress: Math.round(
+                (decisions.length / repository.memberIds.length) * 100
+            ),
+            threshold: 80,
+            members: repository.memberIds.map((member) => ({
+                id: member._id,
+                name: member.name,
+                avatar: member.avatarUrl,
                 percentage: Math.round(
-                    (decision.contributorId.totalSquares /
-                        repository.totalSquares) *
-                        100
+                    (member.totalSquares / repository.totalSquares) * 100
                 ),
-                confirmed: decision.decision === "approve",
+                confirmed: decisions.some(
+                    (decision) =>
+                        decision.createdBy._id.toString() ===
+                        member._id.toString()
+                ),
             })),
         };
 
         res.json({
-            message: "Judge detail retrieved successfully",
+            message: "Judge details retrieved successfully",
             data: {
                 projectBrief: {
                     name: repository.name,
-                    stars: repository.stars || 0,
+                    stars: 0, // TODO: 从 GitHub API 获取
                     status: repository.status,
-                    commits: repository.totalCommits || 0,
+                    commits: repository.totalCommits,
                     repoLink: repository.url,
-                    language: repository.language || "Unknown",
+                    language: "JavaScript", // TODO: 从仓库分析中获取
                     lastUpdate: repository.lastAnalyzed,
                 },
                 progressTree: milestoneDetails,
@@ -94,9 +100,9 @@ exports.getJudgeDetail = async (req, res) => {
             },
         });
     } catch (error) {
-        logger.error("Failed to get judge detail:", error);
+        logger.error("Failed to get judge details:", error);
         res.status(500).json({
-            message: "Failed to get judge detail",
+            message: "Failed to get judge details",
             error: error.message,
         });
     }

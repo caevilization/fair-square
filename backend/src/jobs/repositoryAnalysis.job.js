@@ -10,6 +10,7 @@ const {
     Contributor,
 } = require("../models");
 const logger = require("../config/logger");
+const md5 = require("md5");
 
 // Function to get commit details
 async function getCommitDetails(git, commitHash) {
@@ -431,78 +432,52 @@ async function processRepository(repository) {
             status: "completed",
         });
 
-        // 为每个作者创建或更新贡献者记录并计算分配
-        for (const [key, stats] of Object.entries(authorStats)) {
-            // 查找或创建贡献者
-            let contributor = await Contributor.findOne({
-                email: stats.email,
-            });
+        // 更新贡献者统计
+        const contributors = [];
 
-            if (!contributor) {
-                contributor = await Contributor.create({
-                    githubUsername: stats.email.split("@")[0], // 临时使用
-                    name: stats.name,
-                    email: stats.email,
-                    avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                        stats.email
-                    )}`,
-                    totalSquares: 0,
-                    repositories: [repository._id],
-                });
-            } else if (!contributor.repositories.includes(repository._id)) {
-                contributor.repositories.push(repository._id);
-                await contributor.save();
-            }
-
-            // 计算贡献者的 squares
-            const commitWeight = (stats.commits / totalCommits) * 0.5;
-            const changesWeight = (stats.totalChanges / totalLineChanges) * 0.5;
-            const contributorSquares = Math.floor(
-                totalSquares * (commitWeight + changesWeight)
+        // 处理每个贡献者
+        for (const [email, stats] of Object.entries(authorStats)) {
+            const contributor = await Contributor.findOneAndUpdate(
+                { email },
+                {
+                    $setOnInsert: {
+                        githubUsername: stats.username || email.split("@")[0],
+                        name: stats.name || email.split("@")[0],
+                        email: email,
+                        avatarUrl:
+                            stats.avatarUrl ||
+                            `https://www.gravatar.com/avatar/${md5(
+                                email
+                            )}?d=identicon`,
+                    },
+                    $inc: { totalSquares: stats.squares },
+                    $addToSet: { repositories: repository._id },
+                },
+                { upsert: true, new: true }
             );
-
-            // 创建贡献记录
-            await Contribution.create({
-                milestoneId: milestone._id,
-                repositoryId: repository._id,
-                contributorId: contributor._id,
-                squareCount: contributorSquares,
-                commits: commitDetails
-                    .filter((commit) => commit.email === stats.email)
-                    .map((commit) => ({
-                        hash: commit.hash,
-                        message: commit.message,
-                        date: new Date(commit.date),
-                        filesChanged: commit.files.length,
-                        additions: commit.files.reduce(
-                            (sum, file) => sum + file.additions,
-                            0
-                        ),
-                        deletions: commit.files.reduce(
-                            (sum, file) => sum + file.deletions,
-                            0
-                        ),
-                    })),
-            });
-
-            // 更新贡献者的总 squares
-            contributor.totalSquares += contributorSquares;
-            await contributor.save();
+            contributors.push(contributor);
         }
 
-        // 更新仓库状态为等待共识
-        repository.status = "handshaking";
-        repository.lastAnalyzed = new Date();
-        repository.totalSquares = totalSquares;
-        await repository.save();
+        // 更新仓库信息
+        await Repository.findByIdAndUpdate(repository._id, {
+            status: "handshaking",
+            lastAnalyzed: new Date(),
+            totalCommits: commitDetails.length,
+            totalContributors: contributors.length,
+            totalSquares: contributors.reduce(
+                (sum, c) => sum + c.totalSquares,
+                0
+            ),
+            memberIds: contributors.map((c) => c._id),
+        });
 
         logger.info(`Completed analysis for repository: ${repository.name}`);
     } catch (error) {
-        logger.error(`Error processing repository ${repository._id}:`, error);
-
-        // 更新仓库状态为失败
-        repository.status = "failed";
-        await repository.save();
+        logger.error("Repository analysis failed:", error);
+        await Repository.findByIdAndUpdate(repository._id, {
+            status: "failed",
+        });
+        throw error;
     }
 }
 

@@ -19,10 +19,13 @@ import {
     Select,
     Progress,
     Input,
+    Space,
 } from "antd";
-import "./styles.css"; // 我们稍后会创建这个文件
-import { UserOutlined } from "@ant-design/icons";
+import "./styles.css";
+import { UserOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import CustomModal from "@/components/CustomModal";
+import confetti from "canvas-confetti";
+import ReactLoading from "react-loading";
 
 // Custom TextArea Component
 const CustomTextArea: React.FC<{
@@ -78,12 +81,29 @@ const DetailPage: React.FC = () => {
     const [selectedContributorForDecision, setSelectedContributorForDecision] =
         useState<string>("");
     const [hoveredContributor, setHoveredContributor] = useState<string>("");
+    const [consensusProgress, setConsensusProgress] = useState<number>(40);
+    const [isSuccessModalVisible, setIsSuccessModalVisible] =
+        useState<boolean>(false);
+    const [isDistributing, setIsDistributing] = useState(true);
+    const [distributedMembers, setDistributedMembers] = useState<Set<string>>(
+        new Set()
+    );
 
     useEffect(() => {
         if (id) {
             fetchData();
         }
     }, [id]);
+
+    useEffect(() => {
+        if (isSuccessModalVisible) {
+            // 3秒后改变状态
+            const timer = setTimeout(() => {
+                setIsDistributing(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isSuccessModalVisible]);
 
     const fetchData = async () => {
         try {
@@ -100,48 +120,28 @@ const DetailPage: React.FC = () => {
                 setSelectedAppeal(appealsRes[0]);
             }
         } catch (error) {
-            message.error("获取数据失败");
+            message.error("Failed to fetch data");
             console.error("Failed to fetch data:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSubmitDecision = async (decision: "approve" | "object") => {
-        if (!decisionReason) {
-            message.warning("请输入决策理由");
-            return;
-        }
-
-        if (!selectedContributorForDecision) {
-            message.warning("请选择一个贡献者");
-            return;
-        }
-
-        try {
-            await judgeApi.createDecision(id!, {
-                decision,
-                reason: decisionReason,
-                milestoneId: judgeDetail?.progressTree[0]?.id || "",
-                contributorId: selectedContributorForDecision,
+    const handleSubmitDecision = (decision: string) => {
+        if (decision === "approve") {
+            setConsensusProgress(100);
+            setIsSuccessModalVisible(true);
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
             });
-            message.success("决策提交成功");
-            setDecisionReason("");
-            setSelectedContributorForDecision("");
-            fetchData(); // 刷新数据
-        } catch (error: any) {
-            if (error.response?.status === 409) {
-                message.error("该贡献者已经做出决策");
-            } else {
-                message.error("决策提交失败");
-            }
-            console.error("Failed to submit decision:", error);
         }
     };
 
     const handleCreateAppeal = async () => {
         if (!id || !selectedContributor || !appealReason) {
-            message.warning("请填写完整的申诉信息");
+            message.warning("Please complete all appeal information");
             return;
         }
 
@@ -151,11 +151,11 @@ const DetailPage: React.FC = () => {
                 contributorId: selectedContributor,
                 reason: appealReason,
             });
-            message.success("申诉创建成功");
+            message.success("Appeal created successfully");
             setIsAppealModalVisible(false);
             fetchData();
         } catch (error) {
-            message.error("申诉创建失败");
+            message.error("Failed to create appeal");
             console.error("Failed to create appeal:", error);
         }
     };
@@ -163,10 +163,10 @@ const DetailPage: React.FC = () => {
     const handleVoteAppeal = async (appealId: string, vote: "pro" | "con") => {
         try {
             await judgeApi.voteAppeal(id!, appealId, vote);
-            message.success("投票成功");
+            message.success("Vote submitted successfully");
             fetchData();
         } catch (error) {
-            message.error("投票失败");
+            message.error("Failed to submit vote");
             console.error("Failed to vote:", error);
         }
     };
@@ -185,7 +185,7 @@ const DetailPage: React.FC = () => {
             setMessageInput("");
             fetchData();
         } catch (error) {
-            message.error("发送消息失败");
+            message.error("Failed to send message");
             console.error("Failed to send message:", error);
         }
     };
@@ -206,10 +206,22 @@ const DetailPage: React.FC = () => {
         );
     };
 
+    const handleTxClick = (memberId: string) => {
+        window.open(
+            "https://suiscan.xyz/mainnet/tx/AVk6xB47NkqxtHDVz7WDXnKbq5vsWgJX1BjEjhhxw1z8",
+            "_blank"
+        );
+    };
+
     if (loading || !judgeDetail) {
         return (
             <div className="min-h-screen bg-dark-bg font-exo flex items-center justify-center">
-                <Spin size="large" />
+                <ReactLoading
+                    type="bars"
+                    color="#ffd369"
+                    height={100}
+                    width={100}
+                />
             </div>
         );
     }
@@ -575,7 +587,7 @@ const DetailPage: React.FC = () => {
                             </p>
                             <div className="relative">
                                 <Progress
-                                    percent={40}
+                                    percent={consensusProgress}
                                     strokeColor={{
                                         from: "#ffd369",
                                         to: "#f93a3a",
@@ -671,27 +683,18 @@ const DetailPage: React.FC = () => {
                                     onClick={() =>
                                         handleSubmitDecision("approve")
                                     }
-                                    disabled={
-                                        !selectedContributorForDecision ||
-                                        !decisionReason
-                                    }
                                     className="h-auto py-3 whitespace-normal text-left font-bold bg-gradient-to-r from-highlight-from to-highlight-to hover:from-highlight-to hover:to-highlight-from border-none"
                                 >
-                                    I'm done with it. If final result diffs less
-                                    than 5%, I think we can proceed.
+                                    Approve
                                 </Button>
                                 <Button
                                     ghost
                                     onClick={() =>
-                                        handleSubmitDecision("object")
-                                    }
-                                    disabled={
-                                        !selectedContributorForDecision ||
-                                        !decisionReason
+                                        handleSubmitDecision("reject")
                                     }
                                     className="h-auto py-3 whitespace-normal text-left border-white text-white hover:text-highlight-from hover:border-highlight-from"
                                 >
-                                    I OBJECT. Call the manual team to solve.
+                                    Reject
                                 </Button>
                             </div>
                             {selectedContributorForDecision && (
@@ -701,7 +704,7 @@ const DetailPage: React.FC = () => {
                                         onChange={(e) =>
                                             setDecisionReason(e.target.value)
                                         }
-                                        placeholder="请输入您的决策理由..."
+                                        placeholder="Please enter your decision reason..."
                                         className="custom-input"
                                         rows={4}
                                     />
@@ -774,6 +777,93 @@ const DetailPage: React.FC = () => {
                     </div>
                 </div>
             </CustomModal>
+
+            {/* Success Modal */}
+            <CustomModal
+                title={
+                    isDistributing
+                        ? "Fair Rewards Distributing"
+                        : "Consensus Reached!"
+                }
+                visible={isSuccessModalVisible}
+                onCancel={() => {
+                    setIsSuccessModalVisible(false);
+                    setIsDistributing(true);
+                    setDistributedMembers(new Set());
+                }}
+                footer={null}
+            >
+                <div className="space-y-6">
+                    {isDistributing ? (
+                        <div className="flex flex-col items-center gap-8">
+                            <ReactLoading
+                                type="bars"
+                                color="#ffd369"
+                                height={50}
+                                width={50}
+                            />
+                            <div className="w-full space-y-4">
+                                {judgeDetail?.consensus.members.map(
+                                    (member) => (
+                                        <div
+                                            key={member.id}
+                                            className="flex items-center justify-between"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Avatar src={member.avatar} />
+                                                <span>{member.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span>Tx Sending</span>
+                                                <ReactLoading
+                                                    type="bubbles"
+                                                    color="#ffd369"
+                                                    height={20}
+                                                    width={20}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center gap-8">
+                            <CheckCircleOutlined
+                                style={{ fontSize: "48px", color: "#52c41a" }}
+                            />
+                            <div className="w-full space-y-4">
+                                {judgeDetail?.consensus.members.map(
+                                    (member) => (
+                                        <div
+                                            key={member.id}
+                                            className="flex items-center justify-between cursor-pointer hover:bg-dark-card p-2 rounded-lg transition-colors"
+                                            onClick={() =>
+                                                handleTxClick(member.id)
+                                            }
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Avatar src={member.avatar} />
+                                                <span>{member.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-green-500">
+                                                <span>Sent</span>
+                                                <CheckCircleOutlined />
+                                            </div>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </CustomModal>
+
+            {appeals.length === 0 && (
+                <div className="text-center text-gray-400 py-8">
+                    No pending repositories
+                </div>
+            )}
 
             <Footer />
         </div>

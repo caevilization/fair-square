@@ -51,6 +51,12 @@ const repositorySchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        memberIds: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Contributor",
+            },
+        ],
     },
     {
         timestamps: true,

@@ -13,7 +13,7 @@ module.exports = {
                 exo: ['"Exo 2"', "sans-serif"],
             },
             fontSize: {
-                // 基础文本大小
+                // Base text size
                 base: ["1rem", "1.5rem"], // 16px
                 lg: ["1.125rem", "1.75rem"], // 18px
                 xl: ["1.25rem", "1.75rem"], // 20px

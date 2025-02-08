@@ -110,25 +110,25 @@ export interface Decision {
 }
 
 export const judgeApi = {
-    // 获取所有处于 handshaking 状态的仓库列表
+    // Get all repositories in handshaking status
     listJudges: async (): Promise<Repository[]> => {
         const response = await api.get("/judges");
         return response.data.data;
     },
 
-    // 获取特定仓库的 judge 详情
+    // Get judge details for a specific repository
     getJudgeDetail: async (repositoryId: string): Promise<JudgeDetail> => {
         const response = await api.get(`/judges/${repositoryId}`);
         return response.data.data;
     },
 
-    // 获取申诉列表
+    // Get appeal list
     getAppeals: async (repositoryId: string): Promise<Appeal[]> => {
         const response = await api.get(`/judges/${repositoryId}/appeals`);
         return response.data.data;
     },
 
-    // 获取申诉消息列表
+    // Get appeal message list
     getAppealMessages: async (
         repositoryId: string,
         appealId: string
@@ -139,7 +139,7 @@ export const judgeApi = {
         return response.data.data;
     },
 
-    // 创建新的申诉消息
+    // Create new appeal message
     createAppealMessage: async (
         repositoryId: string,
         appealId: string,
@@ -152,13 +152,13 @@ export const judgeApi = {
         return response.data.data;
     },
 
-    // 获取决策列表
+    // Get decision list
     getDecisions: async (repositoryId: string): Promise<Decision[]> => {
         const response = await api.get(`/judges/${repositoryId}/decisions`);
         return response.data.data;
     },
 
-    // 创建决策
+    // Create decision
     createDecision: async (
         repositoryId: string,
         data: {
@@ -175,7 +175,7 @@ export const judgeApi = {
         return response.data.data;
     },
 
-    // 对申诉投票
+    // Vote on appeal
     voteAppeal: async (
         repositoryId: string,
         appealId: string,
@@ -188,7 +188,7 @@ export const judgeApi = {
         return response.data.data;
     },
 
-    // 对消息投票
+    // Vote on message
     voteMessage: async (
         repositoryId: string,
         appealId: string,
@@ -200,7 +200,7 @@ export const judgeApi = {
         return response.data.data;
     },
 
-    // 对消息投反对票
+    // Vote against message
     vetoMessage: async (
         repositoryId: string,
         appealId: string,
