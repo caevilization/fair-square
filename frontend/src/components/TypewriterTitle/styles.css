@@ -1,0 +1,30 @@
+.typewriter-title {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    font-family: "Exo 2", sans-serif;
+    white-space: nowrap;
+}
+
+.cursor {
+    display: inline-block;
+    margin-left: 2px;
+    font-weight: 100;
+    color: #ffd369;
+}
+
+.cursor.visible {
+    opacity: 1;
+}
+
+.cursor.hidden {
+    opacity: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .typewriter-title {
+        font-size: 2rem;
+        line-height: 1.2;
+    }
+}

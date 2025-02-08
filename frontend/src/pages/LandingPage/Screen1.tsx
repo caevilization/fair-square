@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Input, message } from "antd";
 import CustomModal from "@/components/CustomModal";
+import TypewriterTitle from "@/components/TypewriterTitle";
 
 const TARGET_NUMBER = 14029;
 const ANIMATION_DURATION = 2000; // 2秒
@@ -101,9 +102,9 @@ const Screen1: React.FC = () => {
             <div className="relative z-10 flex flex-col md:flex-row justify-between w-full h-screen px-[5%] md:px-[8%]">
                 {/* 移动端主标题块 - 仅在移动端显示 */}
                 <div className="md:hidden w-full flex flex-col items-center mt-[12vh] mb-8">
-                    <h1 className="text-white text-4xl font-extrabold mb-4 whitespace-normal text-center max-w-[320px]">
-                        MEET YOUR AI JUDGE
-                    </h1>
+                    <div className="text-center max-w-[320px]">
+                        <TypewriterTitle className="text-white text-4xl font-extrabold mb-4" />
+                    </div>
                     <h2 className="text-white text-xl font-normal mb-6 text-center max-w-[320px]">
                         Transparent, Fast, and Unbiased Contribution Evaluation
                     </h2>
@@ -142,9 +143,9 @@ const Screen1: React.FC = () => {
                 <div className="hidden md:flex w-[30%] flex-col h-full text-right">
                     {/* Block 2 - 右上 */}
                     <div className="mt-[20vh] flex flex-col items-end">
-                        <h1 className="text-white text-5xl font-extrabold mb-6 whitespace-nowrap">
-                            MEET YOUR AI JUDGE
-                        </h1>
+                        <div className="text-right">
+                            <TypewriterTitle className="text-white text-5xl font-extrabold mb-6" />
+                        </div>
                         <h2 className="text-white text-3xl font-normal mb-6 whitespace-nowrap">
                             Transparent, Fast, and Unbiased
                             <br />
