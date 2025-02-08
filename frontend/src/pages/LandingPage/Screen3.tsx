@@ -19,7 +19,7 @@ const scenarios = [
         icon: CodeBracketIcon,
         title: "Open Source",
         description:
-            "Resolve contribution disputes with AI-driven arbitration. Ensure every contributor's efforts are recognized and valued.",
+            "Resolve contribution disputes with AI-driven Evaluation. Ensure every contributor's efforts are recognized and valued.",
     },
     {
         icon: AcademicCapIcon,

@@ -17,11 +17,6 @@ export default defineConfig({
                 target: "http://localhost:3000",
                 changeOrigin: true,
             },
-            "/eliza": {
-                target: "http://54.145.197.118:3000",
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/eliza/, ""),
-            },
         },
     },
     base: "/",

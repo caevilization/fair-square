@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "antd";
+import { useNavigate } from "react-router-dom";
+import { Button, Input, message } from "antd";
+import CustomModal from "@/components/CustomModal";
 
 const TARGET_NUMBER = 14029;
 const ANIMATION_DURATION = 2000; // 2秒
 const FRAME_RATE = 60; // 每秒60帧
 
 const Screen1: React.FC = () => {
+    const navigate = useNavigate();
     const [count, setCount] = useState(0);
     const [hasAnimated, setHasAnimated] = useState(false);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [repoUrl, setRepoUrl] = useState("");
 
     useEffect(() => {
         const handleScroll = () => {
@@ -68,6 +73,23 @@ const Screen1: React.FC = () => {
         };
     }, [hasAnimated]);
 
+    const handleStartEvaluation = async () => {
+        if (!repoUrl) {
+            message.warning("Please enter a repository URL");
+            return;
+        }
+
+        try {
+            // TODO: Call backend API to start Evaluation
+            message.success("Evaluation started successfully");
+            setIsModalVisible(false);
+            navigate("/list");
+        } catch (error) {
+            message.error("Failed to start Evaluation");
+            console.error("Failed to start Evaluation:", error);
+        }
+    };
+
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 法官图片容器 - 居中定位 */}
@@ -83,10 +105,13 @@ const Screen1: React.FC = () => {
                         MEET YOUR AI JUDGE
                     </h1>
                     <h2 className="text-white text-xl font-normal mb-6 text-center max-w-[320px]">
-                        Transparent, Fair, and Unbiased Contribution Arbitration
+                        Transparent, Fast, and Unbiased Contribution Evaluation
                     </h2>
-                    <Button className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-lg font-bold px-5 py-3 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white">
-                        START ARBITRATION →
+                    <Button
+                        className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-lg font-bold px-5 py-3 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white"
+                        onClick={() => setIsModalVisible(true)}
+                    >
+                        START Evaluation →
                     </Button>
                 </div>
 
@@ -121,12 +146,15 @@ const Screen1: React.FC = () => {
                             MEET YOUR AI JUDGE
                         </h1>
                         <h2 className="text-white text-3xl font-normal mb-6 whitespace-nowrap">
-                            Transparent, Fair, and Unbiased
+                            Transparent, Fast, and Unbiased
                             <br />
-                            Contribution Arbitration
+                            Contribution Evaluation
                         </h2>
-                        <Button className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-2xl font-bold px-7 py-5 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white">
-                            START ARBITRATION →
+                        <Button
+                            className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white text-2xl font-bold px-7 py-5 rounded cursor-pointer transition-transform hover:translate-y-[-2px] hover:text-white"
+                            onClick={() => setIsModalVisible(true)}
+                        >
+                            START Evaluation →
                         </Button>
                     </div>
                     {/* Block 4 - 右下 */}
@@ -156,6 +184,35 @@ const Screen1: React.FC = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Evaluation Modal */}
+            <CustomModal
+                title="Start Evaluation"
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+            >
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Repository URL
+                        </label>
+                        <Input
+                            placeholder="https://github.com/username/repository"
+                            value={repoUrl}
+                            onChange={(e) => setRepoUrl(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <Button
+                            type="primary"
+                            onClick={handleStartEvaluation}
+                            className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white hover:text-white"
+                        >
+                            Submit
+                        </Button>
+                    </div>
+                </div>
+            </CustomModal>
         </div>
     );
 };

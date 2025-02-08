@@ -16,6 +16,15 @@ const appealSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        type: {
+            type: String,
+            enum: ["long", "short"],
+            required: true,
+        },
+        reason: {
+            type: String,
+            required: true,
+        },
         status: {
             type: String,
             enum: ["open", "closed"],

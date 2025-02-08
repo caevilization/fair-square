@@ -27,7 +27,10 @@ app.get("/api/ping", (req, res) => {
 
 // Register routes
 const repositoryRoutes = require("./routes/repository.routes");
+const judgeRoutes = require("./routes/judge.routes");
+
 app.use("/api/repositories", repositoryRoutes);
+app.use("/api/judges", judgeRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

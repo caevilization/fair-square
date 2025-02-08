@@ -54,6 +54,7 @@
     background-color: transparent !important;
     border: 2px solid white !important;
     border-radius: 9999px !important;
+    height: 24px !important;
 }
 
 .custom-progress .ant-progress-bg {
@@ -63,6 +64,45 @@
 
 .custom-progress .ant-progress-text {
     color: white !important;
+}
+
+.threshold-marker {
+    position: absolute;
+    top: -20px;
+    bottom: -20px;
+    width: 2px;
+    height: 60px;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.5) 0,
+        rgba(255, 255, 255, 0.5) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+    border-radius: 1px;
+}
+
+.threshold-label {
+    position: absolute;
+    top: -32px;
+    transform: translateX(-50%);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.progress-value {
+    position: absolute;
+    bottom: -24px;
+    left: var(--progress-value-left);
+    transform: translateX(-50%);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.progress-description {
+    margin-top: 36px !important;
 }
 
 /* 自定义 Input 组件样式 */

@@ -1,8 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import {
+    judgeApi,
+    type JudgeDetail,
+    type Appeal,
+    type Decision,
+} from "@/services/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Descriptions, Collapse, Avatar, Button } from "antd";
+import {
+    Descriptions,
+    Collapse,
+    Avatar,
+    Button,
+    message,
+    Spin,
+    Radio,
+    Select,
+    Progress,
+    Input,
+} from "antd";
 import "./styles.css"; // 我们稍后会创建这个文件
+import { UserOutlined } from "@ant-design/icons";
+import CustomModal from "@/components/CustomModal";
 
 // Custom TextArea Component
 const CustomTextArea: React.FC<{
@@ -42,193 +62,157 @@ const CustomTextArea: React.FC<{
     );
 };
 
-// 模拟数据，实际应从后端获取
-const projectData = {
-    name: "Fair Square",
-    stars: 128,
-    status: "In Progress",
-    commits: 256,
-    repoLink: "https://github.com/username/fair-square",
-    language: "TypeScript",
-    lastUpdate: "2024-02-28",
-};
-
-const milestones = [
-    {
-        id: 1,
-        name: "MVP",
-        squares: 3200,
-        percentage: 24,
-        description:
-            "Initial release with core features including repository analysis and basic contribution tracking.",
-        allocations: [
-            {
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-                name: "Felix Chen",
-                email: "felix@example.com",
-                percentage: 45,
-                contribution:
-                    "Implemented core analysis engine and API endpoints",
-                squares: 1440,
-            },
-            {
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-                name: "Sarah Zhang",
-                email: "sarah@example.com",
-                percentage: 55,
-                contribution:
-                    "Developed frontend interface and data visualization",
-                squares: 1760,
-            },
-        ],
-    },
-    // 可以添加更多里程碑
-];
-
-// Appeals 模拟数据
-const appeals = [
-    {
-        id: 1,
-        title: "#1 Short for Mr.Monthly in Stage 1",
-        pro: {
-            percentage: 32,
-            users: [
-                {
-                    id: 1,
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-                },
-                {
-                    id: 2,
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-                },
-            ],
-        },
-        con: {
-            percentage: 43,
-            users: [
-                {
-                    id: 3,
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
-                },
-                {
-                    id: 4,
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tom",
-                },
-            ],
-        },
-        messages: [
-            {
-                id: 1,
-                user: {
-                    name: "John Doe",
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-                },
-                content:
-                    "I think we should consider the monthly contribution pattern.",
-                votes: 12,
-                vetoes: 3,
-                timestamp: "2024-02-28T10:00:00Z",
-            },
-            {
-                id: 2,
-                user: {
-                    name: "Lisa Wang",
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
-                },
-                content: "But the weekly metrics show more accurate results.",
-                votes: 8,
-                vetoes: 5,
-                timestamp: "2024-02-28T10:05:00Z",
-            },
-        ],
-    },
-    // 可以添加更多 appeals
-];
-
-// Consensus 模拟数据
-const consensusData = {
-    progress: 64,
-    threshold: 80,
-    members: [
-        {
-            id: 1,
-            name: "John Doe",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-            percentage: 25,
-            confirmed: true,
-        },
-        {
-            id: 2,
-            name: "Lisa Wang",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
-            percentage: 35,
-            confirmed: false,
-        },
-        {
-            id: 3,
-            name: "Mike Chen",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-            percentage: 40,
-            confirmed: true,
-        },
-    ],
-};
-
 const DetailPage: React.FC = () => {
-    const [selectedAppeal, setSelectedAppeal] = useState(appeals[0]);
+    const { id } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [judgeDetail, setJudgeDetail] = useState<JudgeDetail | null>(null);
+    const [appeals, setAppeals] = useState<Appeal[]>([]);
+    const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
+    const [decisionReason, setDecisionReason] = useState("");
+    const [appealType, setAppealType] = useState<"long" | "short">("long");
+    const [selectedContributor, setSelectedContributor] = useState<string>("");
+    const [appealReason, setAppealReason] = useState("");
     const [messageInput, setMessageInput] = useState("");
+    const [isAppealModalVisible, setIsAppealModalVisible] = useState(false);
+    const [decisions, setDecisions] = useState<Decision[]>([]);
+    const [selectedContributorForDecision, setSelectedContributorForDecision] =
+        useState<string>("");
+    const [hoveredContributor, setHoveredContributor] = useState<string>("");
 
-    // const items: CollapseProps["items"] = milestones.map((milestone) => ({
-    //     key: milestone.id,
-    //     label: (
-    //         <span>
-    //             Milestone {milestone.id} - {milestone.name} ({milestone.squares}{" "}
-    //             sqrs, {milestone.percentage}%)
-    //         </span>
-    //     ),
-    //     children: (
-    //         <div className="space-y-6 text-white">
-    //             <div>
-    //                 <p className="font-bold mb-2">Description</p>
-    //                 <p className="text-gray-300">{milestone.description}</p>
-    //             </div>
-    //             <div>
-    //                 <p className="font-bold mb-4">Allocation for milestone</p>
-    //                 <div className="space-y-4">
-    //                     {milestone.allocations.map((allocation, index) => (
-    //                         <div
-    //                             key={index}
-    //                             className="bg-dark-card rounded-lg p-4 space-y-2"
-    //                         >
-    //                             <div className="flex items-center gap-4">
-    //                                 <Avatar src={allocation.avatar} size={40} />
-    //                                 <div>
-    //                                     <p className="font-bold">
-    //                                         {allocation.name}
-    //                                     </p>
-    //                                     <p className="text-sm text-gray-400">
-    //                                         {allocation.email}
-    //                                     </p>
-    //                                 </div>
-    //                                 <div className="ml-auto text-right">
-    //                                     <p className="font-bold text-highlight-from">
-    //                                         {allocation.percentage}%
-    //                                     </p>
-    //                                     <p className="text-sm text-gray-400">
-    //                                         {allocation.squares} sqrs
-    //                                     </p>
-    //                                 </div>
-    //                             </div>
-    //                             <p className="text-sm text-gray-300">
-    //                                 {allocation.contribution}
-    //                             </p>
-    //                         </div>
-    //                     ))}
-    //                 </div>
-    //             </div>
-    //         </div>
-    //     ),
-    // }));
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+    }, [id]);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [detailRes, appealsRes, decisionsRes] = await Promise.all([
+                judgeApi.getJudgeDetail(id!),
+                judgeApi.getAppeals(id!),
+                judgeApi.getDecisions(id!),
+            ]);
+            setJudgeDetail(detailRes);
+            setAppeals(appealsRes);
+            setDecisions(decisionsRes);
+            if (appealsRes.length > 0) {
+                setSelectedAppeal(appealsRes[0]);
+            }
+        } catch (error) {
+            message.error("获取数据失败");
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmitDecision = async (decision: "approve" | "object") => {
+        if (!decisionReason) {
+            message.warning("请输入决策理由");
+            return;
+        }
+
+        if (!selectedContributorForDecision) {
+            message.warning("请选择一个贡献者");
+            return;
+        }
+
+        try {
+            await judgeApi.createDecision(id!, {
+                decision,
+                reason: decisionReason,
+                milestoneId: judgeDetail?.progressTree[0]?.id || "",
+                contributorId: selectedContributorForDecision,
+            });
+            message.success("决策提交成功");
+            setDecisionReason("");
+            setSelectedContributorForDecision("");
+            fetchData(); // 刷新数据
+        } catch (error: any) {
+            if (error.response?.status === 409) {
+                message.error("该贡献者已经做出决策");
+            } else {
+                message.error("决策提交失败");
+            }
+            console.error("Failed to submit decision:", error);
+        }
+    };
+
+    const handleCreateAppeal = async () => {
+        if (!id || !selectedContributor || !appealReason) {
+            message.warning("请填写完整的申诉信息");
+            return;
+        }
+
+        try {
+            await judgeApi.createAppeal(id, {
+                type: appealType,
+                contributorId: selectedContributor,
+                reason: appealReason,
+            });
+            message.success("申诉创建成功");
+            setIsAppealModalVisible(false);
+            fetchData();
+        } catch (error) {
+            message.error("申诉创建失败");
+            console.error("Failed to create appeal:", error);
+        }
+    };
+
+    const handleVoteAppeal = async (appealId: string, vote: "pro" | "con") => {
+        try {
+            await judgeApi.voteAppeal(id!, appealId, vote);
+            message.success("投票成功");
+            fetchData();
+        } catch (error) {
+            message.error("投票失败");
+            console.error("Failed to vote:", error);
+        }
+    };
+
+    const handleSendMessage = async () => {
+        if (!messageInput.trim() || !selectedAppeal) {
+            return;
+        }
+
+        try {
+            await judgeApi.createAppealMessage(
+                id!,
+                selectedAppeal.id,
+                messageInput
+            );
+            setMessageInput("");
+            fetchData();
+        } catch (error) {
+            message.error("发送消息失败");
+            console.error("Failed to send message:", error);
+        }
+    };
+
+    // 检查贡献者是否已做出决策
+    const hasContributorDecided = (contributorId: string) => {
+        return decisions.some(
+            (decision) => decision.createdBy.id === contributorId
+        );
+    };
+
+    // 计算共识进度
+    const calculateConsensusProgress = () => {
+        if (!judgeDetail?.consensus.members.length) return 0;
+        const decidedCount = decisions.length;
+        return Math.round(
+            (decidedCount / judgeDetail.consensus.members.length) * 100
+        );
+    };
+
+    if (loading || !judgeDetail) {
+        return (
+            <div className="min-h-screen bg-dark-bg font-exo flex items-center justify-center">
+                <Spin size="large" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-dark-bg font-exo">
@@ -239,7 +223,7 @@ const DetailPage: React.FC = () => {
                     <h1 className="text-3xl md:text-4xl font-bold text-center sm:text-left">
                         <span className="text-white">Judge Detail of </span>
                         <span className="bg-gradient-to-r from-highlight-from to-highlight-to bg-clip-text text-transparent">
-                            {projectData.name}
+                            {judgeDetail.projectBrief.name}
                         </span>
                     </h1>
                     <img
@@ -249,7 +233,7 @@ const DetailPage: React.FC = () => {
                     />
                 </div>
 
-                {/* 第二部分：项目简介 */}
+                {/* Project Brief */}
                 <div className="mb-12">
                     <h3 className="text-2xl text-white font-bold mb-6">
                         Project Brief
@@ -262,187 +246,194 @@ const DetailPage: React.FC = () => {
                                 {
                                     key: "1",
                                     label: "Name",
-                                    children: projectData.name,
+                                    children: judgeDetail.projectBrief.name,
                                 },
                                 {
                                     key: "2",
                                     label: "Github Stars",
-                                    children: projectData.stars,
+                                    children: judgeDetail.projectBrief.stars,
                                 },
                                 {
                                     key: "3",
                                     label: "Status",
-                                    children: projectData.status,
+                                    children: judgeDetail.projectBrief.status,
                                 },
                                 {
                                     key: "4",
                                     label: "Commits",
-                                    children: projectData.commits,
+                                    children: judgeDetail.projectBrief.commits,
                                 },
                                 {
                                     key: "5",
                                     label: "Repo Link",
                                     children: (
                                         <a
-                                            href={projectData.repoLink}
+                                            href={
+                                                judgeDetail.projectBrief
+                                                    .repoLink
+                                            }
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-highlight-from hover:text-highlight-to transition-colors"
                                         >
-                                            {projectData.repoLink}
+                                            {judgeDetail.projectBrief.repoLink}
                                         </a>
                                     ),
                                 },
                                 {
                                     key: "6",
                                     label: "Language",
-                                    children: projectData.language,
+                                    children: judgeDetail.projectBrief.language,
                                 },
                                 {
                                     key: "7",
                                     label: "Last Update",
-                                    children: projectData.lastUpdate,
+                                    children:
+                                        judgeDetail.projectBrief.lastUpdate,
                                 },
                             ]}
                         />
                     </div>
                 </div>
 
-                {/* 第三部分：进度树 */}
+                {/* Progress Tree */}
                 <div className="mb-20">
                     <h3 className="text-2xl text-white font-bold mb-6">
                         Progress Tree
                     </h3>
                     <div className="relative">
-                        {/* 渐变线 */}
                         <div className="absolute left-[0.5625rem] top-[1.125rem] bottom-0 w-1 bg-gradient-to-b from-highlight-from to-highlight-to rounded-full" />
-
-                        {/* 里程碑列表 */}
                         <div className="space-y-4">
-                            {milestones.map((milestone, index) => (
-                                <div key={milestone.id} className="relative">
-                                    {/* 时间轴圆点 */}
-                                    <div className="absolute left-0 top-[1.125rem] w-5 h-5 bg-highlight-from rounded-full" />
-                                    <div className="pl-8">
-                                        <Collapse
-                                            defaultActiveKey={
-                                                index === 0
-                                                    ? [milestone.id]
-                                                    : []
-                                            }
-                                            items={[
-                                                {
-                                                    key: milestone.id,
-                                                    label: (
-                                                        <span>
-                                                            Milestone{" "}
-                                                            {milestone.id} -{" "}
-                                                            {milestone.name} (
-                                                            {milestone.squares}{" "}
-                                                            sqrs,{" "}
-                                                            {
-                                                                milestone.percentage
-                                                            }
-                                                            %)
-                                                        </span>
-                                                    ),
-                                                    children: (
-                                                        <div className="space-y-6 text-white">
-                                                            <div>
-                                                                <p className="font-bold mb-2">
-                                                                    Description
-                                                                </p>
-                                                                <p className="text-gray-300">
-                                                                    {
-                                                                        milestone.description
-                                                                    }
-                                                                </p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-bold mb-4">
-                                                                    Allocation
-                                                                    for
-                                                                    milestone
-                                                                </p>
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                    {milestone.allocations.map(
-                                                                        (
-                                                                            allocation,
-                                                                            index
-                                                                        ) => (
-                                                                            <div
-                                                                                key={
-                                                                                    index
-                                                                                }
-                                                                                className="bg-dark-card rounded-lg p-4 space-y-2"
-                                                                            >
-                                                                                <div className="flex items-center gap-4">
-                                                                                    <Avatar
-                                                                                        src={
-                                                                                            allocation.avatar
-                                                                                        }
-                                                                                        size={
-                                                                                            40
-                                                                                        }
-                                                                                    />
-                                                                                    <div>
-                                                                                        <p className="font-bold">
-                                                                                            {
-                                                                                                allocation.name
-                                                                                            }
-                                                                                        </p>
-                                                                                        <p className="text-sm text-gray-400">
-                                                                                            {
-                                                                                                allocation.email
-                                                                                            }
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <div className="ml-auto text-right">
-                                                                                        <p className="font-bold text-highlight-from">
-                                                                                            {
-                                                                                                allocation.percentage
-                                                                                            }
-
-                                                                                            %
-                                                                                        </p>
-                                                                                        <p className="text-sm text-gray-400">
-                                                                                            {
-                                                                                                allocation.squares
-                                                                                            }{" "}
-                                                                                            sqrs
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <p className="text-sm text-gray-300">
-                                                                                    {
-                                                                                        allocation.contribution
+                            {judgeDetail.progressTree.map(
+                                (milestone, index) => (
+                                    <div
+                                        key={milestone.id}
+                                        className="relative"
+                                    >
+                                        <div className="absolute left-0 top-[1.125rem] w-5 h-5 bg-highlight-from rounded-full" />
+                                        <div className="pl-8">
+                                            <Collapse
+                                                defaultActiveKey={
+                                                    index === 0
+                                                        ? [milestone.id]
+                                                        : []
+                                                }
+                                                items={[
+                                                    {
+                                                        key: milestone.id,
+                                                        label: (
+                                                            <span>
+                                                                Milestone{" "}
+                                                                {index + 1} -{" "}
+                                                                {milestone.name}{" "}
+                                                                (
+                                                                {
+                                                                    milestone.squares
+                                                                }{" "}
+                                                                sqrs,{" "}
+                                                                {
+                                                                    milestone.percentage
+                                                                }
+                                                                %)
+                                                            </span>
+                                                        ),
+                                                        children: (
+                                                            <div className="space-y-6 text-white">
+                                                                <div>
+                                                                    <p className="font-bold mb-2">
+                                                                        Description
+                                                                    </p>
+                                                                    <p className="text-gray-300">
+                                                                        {
+                                                                            milestone.description
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold mb-4">
+                                                                        Allocation
+                                                                        for
+                                                                        milestone
+                                                                    </p>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                        {milestone.allocations.map(
+                                                                            (
+                                                                                allocation,
+                                                                                index
+                                                                            ) => (
+                                                                                <div
+                                                                                    key={
+                                                                                        index
                                                                                     }
-                                                                                </p>
-                                                                            </div>
-                                                                        )
-                                                                    )}
+                                                                                    className="bg-dark-card rounded-lg p-4 space-y-2"
+                                                                                >
+                                                                                    <div className="flex items-center gap-4">
+                                                                                        <Avatar
+                                                                                            src={
+                                                                                                allocation.avatar
+                                                                                            }
+                                                                                            size={
+                                                                                                40
+                                                                                            }
+                                                                                        />
+                                                                                        <div>
+                                                                                            <p className="font-bold">
+                                                                                                {
+                                                                                                    allocation.name
+                                                                                                }
+                                                                                            </p>
+                                                                                            <p className="text-sm text-gray-400">
+                                                                                                {
+                                                                                                    allocation.email
+                                                                                                }
+                                                                                            </p>
+                                                                                        </div>
+                                                                                        <div className="ml-auto text-right">
+                                                                                            <p className="font-bold text-highlight-from">
+                                                                                                {
+                                                                                                    allocation.percentage
+                                                                                                }
+
+                                                                                                %
+                                                                                            </p>
+                                                                                            <p className="text-sm text-gray-400">
+                                                                                                {
+                                                                                                    allocation.squares
+                                                                                                }{" "}
+                                                                                                sqrs
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <p className="text-sm text-gray-300">
+                                                                                        {
+                                                                                            allocation.contribution
+                                                                                        }
+                                                                                    </p>
+                                                                                </div>
+                                                                            )
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    ),
-                                                },
-                                            ]}
-                                            className="custom-collapse"
-                                        />
+                                                        ),
+                                                    },
+                                                ]}
+                                                className="custom-collapse"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* 第四部分：Appeals */}
+                {/* Appeals */}
                 <div className="mb-12">
                     <h3 className="text-2xl text-white font-bold mb-6">
                         Appeals
                     </h3>
                     <div className="bg-dark-card rounded-lg p-4 md:p-6">
-                        {/* 移动端布局 */}
                         <div className="flex flex-col lg:flex-row lg:divide-x lg:divide-gray-700">
                             {/* Appeal List */}
                             <div className="w-full lg:w-1/4 lg:pr-6 mb-6 lg:mb-0">
@@ -451,7 +442,7 @@ const DetailPage: React.FC = () => {
                                         <div
                                             key={appeal.id}
                                             className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                                                selectedAppeal.id === appeal.id
+                                                selectedAppeal?.id === appeal.id
                                                     ? "bg-gray-700"
                                                     : "hover:bg-gray-700"
                                             }`}
@@ -476,7 +467,7 @@ const DetailPage: React.FC = () => {
                                                                         user.id
                                                                     }
                                                                     src={
-                                                                        user.avatar
+                                                                        user.avatarUrl
                                                                     }
                                                                     size="small"
                                                                 />
@@ -497,7 +488,7 @@ const DetailPage: React.FC = () => {
                                                                         user.id
                                                                     }
                                                                     src={
-                                                                        user.avatar
+                                                                        user.avatarUrl
                                                                     }
                                                                     size="small"
                                                                 />
@@ -510,148 +501,162 @@ const DetailPage: React.FC = () => {
                                     ))}
                                 </div>
                                 <div className="pt-4 border-t border-gray-700 mt-4">
-                                    <button className="text-highlight-from hover:text-highlight-to transition-colors underline">
+                                    <button
+                                        className="text-highlight-from hover:text-highlight-to transition-colors underline"
+                                        onClick={() =>
+                                            setIsAppealModalVisible(true)
+                                        }
+                                    >
                                         + Add New Appeal
                                     </button>
                                 </div>
                             </div>
 
-                            {/* 聊天区 */}
+                            {/* Chat Area */}
                             <div className="flex-1 lg:pl-6">
-                                <div className="flex flex-col h-[500px] lg:h-[600px]">
-                                    {/* 聊天标题 */}
-                                    <div className="pb-4 border-b border-gray-700">
-                                        <h4 className="text-xl text-white font-bold">
-                                            {selectedAppeal.title}
-                                        </h4>
-                                    </div>
-
-                                    {/* 聊天内容区 */}
-                                    <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">
-                                        <div className="space-y-6">
-                                            {selectedAppeal.messages.map(
-                                                (message) => (
-                                                    <div
-                                                        key={message.id}
-                                                        className="flex items-start gap-4"
-                                                    >
-                                                        <Avatar
-                                                            src={
-                                                                message.user
-                                                                    .avatar
-                                                            }
-                                                            size={32}
-                                                        />
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                                <span className="font-bold text-white">
-                                                                    {
-                                                                        message
-                                                                            .user
-                                                                            .name
-                                                                    }
-                                                                </span>
-                                                                <span className="text-sm text-gray-400">
-                                                                    {new Date(
-                                                                        message.timestamp
-                                                                    ).toLocaleTimeString()}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-gray-300 mb-2 break-words">
-                                                                {
-                                                                    message.content
-                                                                }
-                                                            </p>
-                                                            <div className="flex gap-4">
-                                                                <button className="text-sm text-gray-400 hover:text-highlight-from transition-colors">
-                                                                    Vote (
-                                                                    {
-                                                                        message.votes
-                                                                    }
-                                                                    )
-                                                                </button>
-                                                                <button className="text-sm text-gray-400 hover:text-highlight-from transition-colors">
-                                                                    Veto (
-                                                                    {
-                                                                        message.vetoes
-                                                                    }
-                                                                    )
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            )}
+                                {selectedAppeal ? (
+                                    <div className="flex flex-col h-[500px] lg:h-[600px]">
+                                        <div className="pb-4 border-b border-gray-700">
+                                            <h4 className="text-xl text-white font-bold">
+                                                {selectedAppeal.title}
+                                            </h4>
                                         </div>
-                                    </div>
-
-                                    {/* 输入区 */}
-                                    <div className="pt-4 border-t border-gray-700">
-                                        <div className="bg-dark-card rounded-lg p-4">
-                                            <div className="flex flex-col">
-                                                <CustomTextArea
-                                                    value={messageInput}
-                                                    onChange={setMessageInput}
-                                                    placeholder="Type your message here..."
-                                                    minRows={3}
-                                                    maxRows={6}
-                                                />
-                                                <div className="flex justify-end mt-4">
-                                                    <Button className="w-24 lg:w-[15%] bg-[#2c333d] text-white hover:text-highlight-from border-none">
-                                                        Send
-                                                    </Button>
+                                        <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">
+                                            {/* Messages will be loaded here */}
+                                        </div>
+                                        <div className="pt-4 border-t border-gray-700">
+                                            <div className="bg-dark-card rounded-lg p-4">
+                                                <div className="flex flex-col">
+                                                    <CustomTextArea
+                                                        value={messageInput}
+                                                        onChange={
+                                                            setMessageInput
+                                                        }
+                                                        placeholder="Type your message here..."
+                                                        minRows={3}
+                                                        maxRows={6}
+                                                    />
+                                                    <div className="flex justify-end mt-4">
+                                                        <Button
+                                                            onClick={
+                                                                handleSendMessage
+                                                            }
+                                                            className="w-24 lg:w-[15%] bg-[#2c333d] text-white hover:text-highlight-from border-none"
+                                                        >
+                                                            Send
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="flex items-center justify-center h-[500px] lg:h-[600px]">
+                                        <p className="text-gray-400">
+                                            Select an appeal to view messages
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 第五部分：Consensus */}
+                {/* Consensus */}
                 <div>
                     <h3 className="text-2xl text-white font-bold mb-6">
                         Consensus
                     </h3>
                     <div className="bg-dark-card rounded-lg p-4 md:p-6 space-y-8">
+                        {/* Progress */}
+                        <div>
+                            <p className="font-bold text-white mb-4">
+                                Progress
+                            </p>
+                            <div className="relative">
+                                <Progress
+                                    percent={40}
+                                    strokeColor={{
+                                        from: "#ffd369",
+                                        to: "#f93a3a",
+                                    }}
+                                    className="custom-progress"
+                                    showInfo={false}
+                                />
+                                <div
+                                    className="threshold-marker"
+                                    style={{
+                                        left: `${judgeDetail?.consensus.threshold || 80}%`,
+                                    }}
+                                />
+                                <div
+                                    className="threshold-label"
+                                    style={{
+                                        left: `${judgeDetail?.consensus.threshold || 80}%`,
+                                    }}
+                                >
+                                    Threshold: 80%
+                                </div>
+                                <p className="text-center text-white mt-8">
+                                    40% agreed, needs 40% more to reach the
+                                    consensus
+                                </p>
+                            </div>
+                        </div>
+
                         {/* Members */}
                         <div>
                             <p className="font-bold text-white mb-4">Members</p>
                             <div className="flex flex-wrap gap-4 md:gap-6">
-                                {consensusData.members.map((member) => (
-                                    <div
-                                        key={member.id}
-                                        className="flex items-center gap-3 min-w-[200px]"
-                                    >
-                                        <div
-                                            className={`relative ${
-                                                member.confirmed
-                                                    ? "p-0.5 rounded-full bg-gradient-to-r from-highlight-from to-highlight-to"
-                                                    : "p-0.5 rounded-full border-2 border-white"
-                                            }`}
-                                        >
-                                            <Avatar
-                                                src={member.avatar}
-                                                size={36}
-                                                className={
-                                                    member.confirmed
-                                                        ? "border-2 border-dark-bg"
-                                                        : "border-2 border-dark-bg"
+                                {judgeDetail?.consensus.members.map(
+                                    (member) => {
+                                        const hasDecided =
+                                            hasContributorDecided(member.id);
+                                        const isSelected =
+                                            selectedContributorForDecision ===
+                                            member.id;
+
+                                        return (
+                                            <div
+                                                key={member.id}
+                                                className={`flex items-center gap-3 min-w-[200px] cursor-pointer ${
+                                                    isSelected
+                                                        ? "bg-dark-card border border-highlight-from rounded-lg p-2"
+                                                        : ""
+                                                }`}
+                                                onClick={() =>
+                                                    setSelectedContributorForDecision(
+                                                        isSelected
+                                                            ? ""
+                                                            : member.id
+                                                    )
                                                 }
-                                            />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-white">
-                                                {member.name}
-                                            </p>
-                                            <p className="text-sm text-gray-400">
-                                                {member.percentage}%
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                                            >
+                                                <div
+                                                    className={`relative ${
+                                                        hasDecided
+                                                            ? "p-0.5 rounded-full bg-gradient-to-r from-highlight-from to-highlight-to"
+                                                            : "p-0.5 rounded-full border-2 border-white"
+                                                    }`}
+                                                >
+                                                    <Avatar
+                                                        src={member.avatar}
+                                                        size={36}
+                                                        className="border-2 border-dark-bg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-white">
+                                                        {member.name}
+                                                    </p>
+                                                    <p className="text-sm text-gray-400">
+                                                        {member.percentage}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                )}
                             </div>
                         </div>
 
@@ -660,9 +665,16 @@ const DetailPage: React.FC = () => {
                             <p className="font-bold text-white mb-4">
                                 My Decision
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex flex-col gap-4">
                                 <Button
                                     type="primary"
+                                    onClick={() =>
+                                        handleSubmitDecision("approve")
+                                    }
+                                    disabled={
+                                        !selectedContributorForDecision ||
+                                        !decisionReason
+                                    }
                                     className="h-auto py-3 whitespace-normal text-left font-bold bg-gradient-to-r from-highlight-from to-highlight-to hover:from-highlight-to hover:to-highlight-from border-none"
                                 >
                                     I'm done with it. If final result diffs less
@@ -670,15 +682,99 @@ const DetailPage: React.FC = () => {
                                 </Button>
                                 <Button
                                     ghost
+                                    onClick={() =>
+                                        handleSubmitDecision("object")
+                                    }
+                                    disabled={
+                                        !selectedContributorForDecision ||
+                                        !decisionReason
+                                    }
                                     className="h-auto py-3 whitespace-normal text-left border-white text-white hover:text-highlight-from hover:border-highlight-from"
                                 >
                                     I OBJECT. Call the manual team to solve.
                                 </Button>
                             </div>
+                            {selectedContributorForDecision && (
+                                <div className="mt-4">
+                                    <Input.TextArea
+                                        value={decisionReason}
+                                        onChange={(e) =>
+                                            setDecisionReason(e.target.value)
+                                        }
+                                        placeholder="请输入您的决策理由..."
+                                        className="custom-input"
+                                        rows={4}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Add Appeal Modal */}
+            <CustomModal
+                title="Add New Appeal"
+                open={isAppealModalVisible}
+                onCancel={() => setIsAppealModalVisible(false)}
+            >
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Type
+                        </label>
+                        <Radio.Group
+                            value={appealType}
+                            onChange={(e) => setAppealType(e.target.value)}
+                        >
+                            <Radio value="long">Long</Radio>
+                            <Radio value="short">Short</Radio>
+                        </Radio.Group>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Contributor
+                        </label>
+                        <Select
+                            value={selectedContributor}
+                            onChange={setSelectedContributor}
+                            className="w-full"
+                            placeholder="Select a contributor"
+                        >
+                            {judgeDetail.progressTree[0]?.allocations.map(
+                                (allocation) => (
+                                    <Select.Option
+                                        key={allocation.id}
+                                        value={allocation.id}
+                                    >
+                                        {allocation.name}
+                                    </Select.Option>
+                                )
+                            )}
+                        </Select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Reason
+                        </label>
+                        <CustomTextArea
+                            value={appealReason}
+                            onChange={setAppealReason}
+                            placeholder="Enter your reason..."
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <Button
+                            type="primary"
+                            onClick={handleCreateAppeal}
+                            className="bg-gradient-to-r from-highlight-from to-highlight-to border-none text-white hover:text-white"
+                        >
+                            Submit
+                        </Button>
+                    </div>
+                </div>
+            </CustomModal>
+
             <Footer />
         </div>
     );

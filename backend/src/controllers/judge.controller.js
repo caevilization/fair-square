@@ -239,43 +239,90 @@ exports.createAppealMessage = async (req, res) => {
     }
 };
 
+// 获取决策列表
+exports.getDecisions = async (req, res) => {
+    try {
+        const { repositoryId } = req.params;
+        const decisions = await Decision.find({ repositoryId })
+            .populate("createdBy", "name avatar")
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            data: decisions.map((decision) => ({
+                id: decision._id,
+                decision: decision.decision,
+                reason: decision.reason,
+                milestoneId: decision.milestoneId,
+                createdAt: decision.createdAt,
+                createdBy: {
+                    id: decision.createdBy._id,
+                    name: decision.createdBy.name,
+                    avatar: decision.createdBy.avatar,
+                },
+            })),
+        });
+    } catch (error) {
+        console.error("Error getting decisions:", error);
+        res.status(500).json({
+            success: false,
+            message: "获取决策列表失败",
+        });
+    }
+};
+
 // 创建决策
 exports.createDecision = async (req, res) => {
     try {
         const { repositoryId } = req.params;
-        const { decision, reason, milestoneId } = req.body;
-        const contributorId = req.user._id; // 假设已经通过认证中间件设置了 req.user
+        const { decision, reason, milestoneId, contributorId } = req.body;
 
-        // 检查是否已经存在决策
+        // 检查是否已存在该贡献者的决策
         const existingDecision = await Decision.findOne({
             repositoryId,
             milestoneId,
-            contributorId,
+            createdBy: contributorId,
         });
 
         if (existingDecision) {
             return res.status(409).json({
-                message: "Decision already exists",
+                success: false,
+                message: "该贡献者已经做出决策",
             });
         }
 
+        // 创建新决策
         const newDecision = await Decision.create({
             repositoryId,
             milestoneId,
-            contributorId,
             decision,
             reason,
+            createdBy: contributorId,
         });
 
-        res.status(201).json({
-            message: "Decision created successfully",
-            data: newDecision,
+        // 获取贡献者信息
+        const contributor = await Contributor.findById(contributorId);
+
+        res.json({
+            success: true,
+            data: {
+                id: newDecision._id,
+                decision: newDecision.decision,
+                reason: newDecision.reason,
+                milestoneId: newDecision.milestoneId,
+                createdAt: newDecision.createdAt,
+                createdBy: {
+                    id: contributor._id,
+                    name: contributor.name,
+                    avatar: contributor.avatarUrl,
+                },
+            },
         });
     } catch (error) {
-        logger.error("Failed to create decision:", error);
+        console.error("Error creating decision:", error);
         res.status(500).json({
-            message: "Failed to create decision",
-            error: error.message,
+            success: false,
+            message: "创建决策失败",
         });
     }
 };

@@ -1,0 +1,56 @@
+.custom-modal .ant-modal-content {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.custom-modal .ant-modal-close {
+    color: #ffffff;
+}
+
+.custom-modal .ant-modal-close:hover {
+    color: #ffd369;
+}
+
+.custom-modal .ant-modal-header {
+    background-color: transparent;
+    border-bottom: none;
+}
+
+.custom-modal .ant-modal-title {
+    color: #ffffff;
+}
+
+.custom-modal .ant-modal-body {
+    color: #ffffff;
+}
+
+.custom-modal .ant-radio-wrapper {
+    color: #ffffff;
+}
+
+.custom-modal .ant-radio-checked .ant-radio-inner {
+    border-color: #ffd369;
+    background-color: #ffd369;
+}
+
+.custom-modal .ant-select-selector {
+    background-color: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+    color: #ffffff !important;
+}
+
+.custom-modal .ant-select-selection-item {
+    color: #ffffff !important;
+}
+
+.custom-modal .ant-input {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+    color: #ffffff;
+}
+
+.custom-modal .ant-input:hover,
+.custom-modal .ant-input:focus {
+    border-color: #ffd369;
+}

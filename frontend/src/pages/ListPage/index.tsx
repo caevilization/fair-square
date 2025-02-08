@@ -1,56 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-interface Contributor {
-    id: number;
-    name: string;
-    avatar: string;
-}
-
-interface Repository {
-    id: number;
-    name: string;
-    status: string;
-    commits: number;
-    stars: number;
-    githubUrl: string;
-    description: string;
-    contributors: Contributor[];
-}
-
-const mockData: Repository[] = [
-    {
-        id: 1,
-        name: "Fair Square",
-        status: "In Progress",
-        commits: 3200,
-        stars: 128,
-        githubUrl: "https://github.com/username/fair-square",
-        description:
-            "An open-source project contribution analysis platform designed to help open-source communities better recognize and reward contributors through intelligent analysis and fair evaluation mechanisms.",
-        contributors: [
-            {
-                id: 1,
-                name: "John Doe",
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-            },
-            {
-                id: 2,
-                name: "Lisa Wang",
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
-            },
-            {
-                id: 3,
-                name: "Mike Chen",
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-            },
-        ],
-    },
-];
+import { judgeApi, type Repository } from "@/services/api";
+import { Spin, message } from "antd";
 
 const ListPage: React.FC = () => {
+    const [loading, setLoading] = useState(true);
+    const [repositories, setRepositories] = useState<Repository[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const data = await judgeApi.listJudges();
+                setRepositories(data);
+            } catch (error) {
+                message.error("获取仓库列表失败");
+                console.error("Failed to fetch repositories:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-dark-bg font-exo flex items-center justify-center">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-dark-bg font-exo">
             <Navbar />
@@ -60,7 +42,7 @@ const ListPage: React.FC = () => {
                 </h1>
 
                 <div className="space-y-4">
-                    {mockData.map((repo) => (
+                    {repositories.map((repo) => (
                         <div
                             key={repo.id}
                             className="bg-dark-card rounded-lg p-6 relative hover:bg-opacity-80 transition-all"
@@ -69,7 +51,7 @@ const ListPage: React.FC = () => {
                             <div className="absolute top-4 right-4">
                                 <span
                                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                        repo.status === "In Progress"
+                                        repo.status === "handshaking"
                                             ? "bg-highlight-from/20 text-highlight-from"
                                             : "bg-gray-700 text-gray-300"
                                     }`}
@@ -84,7 +66,7 @@ const ListPage: React.FC = () => {
                                     {repo.name}
                                 </h2>
                                 <a
-                                    href={repo.githubUrl}
+                                    href={`https://github.com/${repo.owner}/${repo.name}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-gray-400 hover:text-white transition-colors"
@@ -144,7 +126,7 @@ const ListPage: React.FC = () => {
                                                     d="M13 10V3L4 14h7v7l9-11h-7z"
                                                 />
                                             </svg>
-                                            {repo.commits.toLocaleString()}{" "}
+                                            {repo.totalCommits.toLocaleString()}{" "}
                                             commits
                                         </div>
                                         <div className="flex items-center gap-1 text-highlight-from">
@@ -155,21 +137,24 @@ const ListPage: React.FC = () => {
                                             >
                                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                             </svg>
-                                            {repo.stars.toLocaleString()} stars
+                                            {repo.consensusProgress}% consensus
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Description */}
+                                {/* Last Updated */}
                                 <p className="text-gray-400 text-sm">
-                                    {repo.description}
+                                    Last analyzed:{" "}
+                                    {new Date(
+                                        repo.lastAnalyzed
+                                    ).toLocaleDateString()}
                                 </p>
                             </div>
 
                             {/* Detail Button */}
                             <div className="flex justify-end mt-4">
                                 <Link
-                                    to="/detail"
+                                    to={`/detail/${repo.id}`}
                                     className="inline-flex items-center text-white hover:text-highlight-from transition-colors"
                                 >
                                     View Details
@@ -178,6 +163,12 @@ const ListPage: React.FC = () => {
                             </div>
                         </div>
                     ))}
+
+                    {repositories.length === 0 && (
+                        <div className="text-center text-gray-400 py-8">
+                            暂无待处理的仓库
+                        </div>
+                    )}
                 </div>
             </div>
             <Footer />

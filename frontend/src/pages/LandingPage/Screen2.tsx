@@ -16,9 +16,9 @@ const steps = [
         image: "/assets/images/step2.png",
     },
     {
-        title: "Fair Arbitration",
+        title: "Fair Evaluation",
         description:
-            "Receive a detailed report and arbitration results, ensuring every contributor is recognized fairly.",
+            "Receive a detailed report and Evaluation results, ensuring every contributor is recognized fairly.",
         image: "/assets/images/step3.png",
     },
 ];

@@ -8,6 +8,10 @@ router.get("/", judgeController.listJudges);
 // Judge Detail
 router.get("/:repositoryId", judgeController.getJudgeDetail);
 
+// Decisions
+router.get("/:repositoryId/decisions", judgeController.getDecisions);
+router.post("/:repositoryId/decisions", judgeController.createDecision);
+
 // Appeals
 router.get("/:repositoryId/appeals", judgeController.getAppealList);
 router.get(
@@ -18,9 +22,6 @@ router.post(
     "/:repositoryId/appeals/:appealId/messages",
     judgeController.createAppealMessage
 );
-
-// Decisions
-router.post("/:repositoryId/decisions", judgeController.createDecision);
 
 // Appeal Votes
 router.post(
