@@ -9,19 +9,19 @@ const {
 } = require("../models");
 const logger = require("../config/logger");
 
-// 临时函数：模拟获取用户ID
-// TODO: 这是一个临时的解决方案，需要替换为真实的用户认证系统
+// Temporary function: Simulate getting user ID
+// TODO: This is a temporary solution and needs to be replaced with a real user authentication system
 const fakeGetUserId = async () => {
     let id = await Contributor.findOne().then((contributor) => contributor._id);
     return id;
 };
 
-// 获取 Judge 详情
+// Get Judge details
 exports.getJudgeDetail = async (req, res) => {
     try {
         const { repositoryId } = req.params;
 
-        // 获取仓库信息，并填充memberIds
+        // Get repository information and populate memberIds
         const repository = await Repository.findById(repositoryId).populate(
             "memberIds"
         );
@@ -29,7 +29,7 @@ exports.getJudgeDetail = async (req, res) => {
             return res.status(404).json({ message: "Repository not found" });
         }
 
-        // 获取里程碑信息及其贡献
+        // Get milestone information and its contributions
         const milestones = await Milestone.find({ repositoryId });
         const milestoneDetails = await Promise.all(
             milestones.map(async (milestone) => {
@@ -64,12 +64,12 @@ exports.getJudgeDetail = async (req, res) => {
             })
         );
 
-        // 获取决策信息
+        // Get decision information
         const decisions = await Decision.find({ repositoryId }).populate(
             "createdBy"
         );
 
-        // 构建共识数据
+        // Build consensus data
         const consensusData = {
             progress: Math.round(
                 (decisions.length / repository.memberIds.length) * 100
@@ -95,11 +95,11 @@ exports.getJudgeDetail = async (req, res) => {
             data: {
                 projectBrief: {
                     name: repository.name,
-                    stars: 0, // TODO: 从 GitHub API 获取
+                    stars: 0, // TODO: Get from GitHub API
                     status: repository.status,
                     commits: repository.totalCommits,
                     repoLink: repository.url,
-                    language: "JavaScript", // TODO: 从仓库分析中获取
+                    language: "JavaScript", // TODO: Get from repository analysis
                     lastUpdate: repository.lastAnalyzed,
                 },
                 progressTree: milestoneDetails,
@@ -115,7 +115,7 @@ exports.getJudgeDetail = async (req, res) => {
     }
 };
 
-// 获取 Appeal 列表
+// Get Appeal list
 exports.getAppealList = async (req, res) => {
     try {
         const { repositoryId } = req.params;
@@ -178,7 +178,7 @@ exports.getAppealList = async (req, res) => {
     }
 };
 
-// 获取 Appeal 消息列表
+// Get Appeal message list
 exports.getAppealMessages = async (req, res) => {
     try {
         const { appealId } = req.params;
@@ -212,12 +212,12 @@ exports.getAppealMessages = async (req, res) => {
     }
 };
 
-// 创建 Appeal 消息
+// Create Appeal message
 exports.createAppealMessage = async (req, res) => {
     try {
         const { appealId } = req.params;
         const { content } = req.body;
-        const contributorId = await fakeGetUserId(); // 使用临时函数
+        const contributorId = await fakeGetUserId(); // Use temporary function
 
         const message = await AppealMessage.create({
             appealId,
@@ -252,7 +252,7 @@ exports.createAppealMessage = async (req, res) => {
     }
 };
 
-// 获取决策列表
+// Get decision list
 exports.getDecisions = async (req, res) => {
     try {
         const { repositoryId } = req.params;
@@ -279,19 +279,19 @@ exports.getDecisions = async (req, res) => {
         console.error("Error getting decisions:", error);
         res.status(500).json({
             success: false,
-            message: "获取决策列表失败",
+            message: "Failed to get decision list",
         });
     }
 };
 
-// 创建决策
+// Create decision
 exports.createDecision = async (req, res) => {
     try {
         const { repositoryId } = req.params;
         const { decision, reason, milestoneId } = req.body;
-        const contributorId = await fakeGetUserId(); // 使用临时函数
+        const contributorId = await fakeGetUserId(); // Use temporary function
 
-        // 检查是否已存在该贡献者的决策
+        // Check if the contributor has already made a decision
         const existingDecision = await Decision.findOne({
             repositoryId,
             milestoneId,
@@ -301,11 +301,11 @@ exports.createDecision = async (req, res) => {
         if (existingDecision) {
             return res.status(409).json({
                 success: false,
-                message: "该贡献者已经做出决策",
+                message: "The contributor has already made a decision",
             });
         }
 
-        // 创建新决策
+        // Create a new decision
         const newDecision = await Decision.create({
             repositoryId,
             milestoneId,
@@ -314,7 +314,7 @@ exports.createDecision = async (req, res) => {
             createdBy: contributorId,
         });
 
-        // 获取贡献者信息
+        // Get contributor information
         const contributor = await Contributor.findById(contributorId);
 
         res.json({
@@ -336,24 +336,24 @@ exports.createDecision = async (req, res) => {
         console.error("Error creating decision:", error);
         res.status(500).json({
             success: false,
-            message: "创建决策失败",
+            message: "Failed to create decision",
         });
     }
 };
 
-// 对 Appeal 投票
+// Vote for Appeal
 exports.voteAppeal = async (req, res) => {
     try {
         const { appealId } = req.params;
         const { vote } = req.body; // "pro" or "con"
-        const contributorId = await fakeGetUserId(); // 使用临时函数
+        const contributorId = await fakeGetUserId(); // Use temporary function
 
         const appeal = await Appeal.findById(appealId);
         if (!appeal) {
             return res.status(404).json({ message: "Appeal not found" });
         }
 
-        // 检查是否已经投票
+        // Check if the vote has already been cast
         const hasVoted =
             appeal.proVotes.some((v) =>
                 v.contributorId.equals(contributorId)
@@ -364,7 +364,7 @@ exports.voteAppeal = async (req, res) => {
             return res.status(409).json({ message: "Already voted" });
         }
 
-        // 添加投票
+        // Add vote
         if (vote === "pro") {
             appeal.proVotes.push({ contributorId });
         } else {
@@ -389,18 +389,18 @@ exports.voteAppeal = async (req, res) => {
     }
 };
 
-// 对消息投票
+// Vote for message
 exports.voteMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
-        const contributorId = await fakeGetUserId(); // 使用临时函数
+        const contributorId = await fakeGetUserId(); // Use temporary function
 
         const message = await AppealMessage.findById(messageId);
         if (!message) {
             return res.status(404).json({ message: "Message not found" });
         }
 
-        // 检查是否已经投票
+        // Check if the vote has already been cast
         if (message.votes.some((v) => v.contributorId.equals(contributorId))) {
             return res.status(409).json({ message: "Already voted" });
         }
@@ -424,18 +424,18 @@ exports.voteMessage = async (req, res) => {
     }
 };
 
-// 对消息投反对票
+// Vote against message
 exports.vetoMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
-        const contributorId = await fakeGetUserId(); // 使用临时函数
+        const contributorId = await fakeGetUserId(); // Use temporary function
 
         const message = await AppealMessage.findById(messageId);
         if (!message) {
             return res.status(404).json({ message: "Message not found" });
         }
 
-        // 检查是否已经投反对票
+        // Check if the veto has already been cast
         if (message.vetoes.some((v) => v.contributorId.equals(contributorId))) {
             return res.status(409).json({ message: "Already vetoed" });
         }
@@ -459,33 +459,33 @@ exports.vetoMessage = async (req, res) => {
     }
 };
 
-// 获取 Judge 列表
+// Get Judge list
 exports.listJudges = async (req, res) => {
     try {
-        // 获取所有处于 handshaking 状态的仓库
+        // Get all repositories in handshaking status
         const repositories = await Repository.find({ status: "handshaking" })
             .select("-__v")
             .sort("-lastAnalyzed");
 
-        // 获取每个仓库的详细信息
+        // Get detailed information for each repository
         const judgeList = await Promise.all(
             repositories.map(async (repo) => {
-                // 获取里程碑信息
+                // Get milestone information
                 const milestone = await Milestone.findOne({
                     repositoryId: repo._id,
                 });
 
-                // 获取贡献者信息
+                // Get contributor information
                 const contributions = await Contribution.find({
                     repositoryId: repo._id,
                 }).populate("contributorId");
 
-                // 获取决策信息
+                // Get decision information
                 const decisions = await Decision.find({
                     repositoryId: repo._id,
                 }).populate("contributorId");
 
-                // 计算共识进度
+                // Calculate consensus progress
                 const consensusProgress =
                     decisions.length > 0
                         ? Math.round(
