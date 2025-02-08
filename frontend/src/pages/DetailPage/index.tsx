@@ -5,6 +5,7 @@ import {
     type JudgeDetail,
     type Appeal,
     type Decision,
+    type Message,
 } from "@/services/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,10 +20,14 @@ import {
     Select,
     Progress,
     Input,
-    Space,
+    Tooltip,
 } from "antd";
 import "./styles.css";
-import { UserOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import {
+    UserOutlined,
+    CheckCircleOutlined,
+    AuditOutlined,
+} from "@ant-design/icons";
 import CustomModal from "@/components/CustomModal";
 import confetti from "canvas-confetti";
 import ReactLoading from "react-loading";
@@ -88,6 +93,9 @@ const DetailPage: React.FC = () => {
     const [distributedMembers, setDistributedMembers] = useState<Set<string>>(
         new Set()
     );
+    const [isJudgeLoading, setIsJudgeLoading] = useState(false);
+    const [judgeMessage, setJudgeMessage] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
 
     useEffect(() => {
         if (id) {
@@ -97,7 +105,7 @@ const DetailPage: React.FC = () => {
 
     useEffect(() => {
         if (isSuccessModalVisible) {
-            // 3秒后改变状态
+            // Change state after 3 seconds
             const timer = setTimeout(() => {
                 setIsDistributing(false);
             }, 3000);
@@ -118,6 +126,12 @@ const DetailPage: React.FC = () => {
             setDecisions(decisionsRes);
             if (appealsRes.length > 0) {
                 setSelectedAppeal(appealsRes[0]);
+                // Get messages of the selected appeal
+                const messagesRes = await judgeApi.getAppealMessages(
+                    id!,
+                    appealsRes[0].id
+                );
+                setMessages(messagesRes);
             }
         } catch (error) {
             message.error("Failed to fetch data");
@@ -177,27 +191,26 @@ const DetailPage: React.FC = () => {
         }
 
         try {
-            await judgeApi.createAppealMessage(
+            const newMessage = await judgeApi.createAppealMessage(
                 id!,
                 selectedAppeal.id,
                 messageInput
             );
+            setMessages((prev) => [...prev, newMessage]);
             setMessageInput("");
-            fetchData();
         } catch (error) {
             message.error("Failed to send message");
-            console.error("Failed to send message:", error);
         }
     };
 
-    // 检查贡献者是否已做出决策
+    // Check if contributor has made a decision
     const hasContributorDecided = (contributorId: string) => {
         return decisions.some(
             (decision) => decision.createdBy.id === contributorId
         );
     };
 
-    // 计算共识进度
+    // Calculate consensus progress
     const calculateConsensusProgress = () => {
         if (!judgeDetail?.consensus.members.length) return 0;
         const decidedCount = decisions.length;
@@ -211,6 +224,134 @@ const DetailPage: React.FC = () => {
             "https://suiscan.xyz/mainnet/tx/AVk6xB47NkqxtHDVz7WDXnKbq5vsWgJX1BjEjhhxw1z8",
             "_blank"
         );
+    };
+
+    const handleJudgeArbitration = async () => {
+        if (!selectedAppeal) return;
+
+        const initialMessage =
+            "Received evaluation request, reading related discussions";
+        setJudgeMessage(initialMessage);
+        setIsJudgeLoading(true);
+
+        // Add initial message to the message list
+        const initialJudgeMessage: Message = {
+            id: Date.now().toString(),
+            content: initialMessage,
+            timestamp: new Date().toISOString(),
+            votes: 0,
+            vetoes: 0,
+            user: {
+                name: "Judge",
+                avatar: "/assets/images/judge-avatar.png",
+            },
+        };
+        setMessages((prev) => [...prev, initialJudgeMessage]);
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+            const response = await fetch(
+                "http://54.145.197.118:3000/e0e10e6f-ff2b-0d4c-8011-1fc1eee7cb32/message",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        text: "Please generate standard arbitration format content",
+                    }),
+                    signal: controller.signal,
+                }
+            );
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error("Network request failed");
+            }
+
+            const data = await response.json();
+            if (data && Array.isArray(data) && data.length > 0) {
+                const judgeResponse = data[0].text;
+                setJudgeMessage(judgeResponse);
+
+                // Update judge message in the message list
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === initialJudgeMessage.id
+                            ? { ...msg, content: judgeResponse }
+                            : msg
+                    )
+                );
+            }
+        } catch (error: any) {
+            if (error.name === "AbortError") {
+                message.error("Request timed out, please try again later");
+            } else {
+                message.error("Failed to get judge evaluation");
+            }
+            setJudgeMessage(null);
+            // Remove failed message
+            setMessages((prev) =>
+                prev.filter((msg) => msg.id !== initialJudgeMessage.id)
+            );
+        } finally {
+            setIsJudgeLoading(false);
+        }
+    };
+
+    const handleVoteMessage = async (messageId: string) => {
+        if (!id || !selectedAppeal) return;
+
+        try {
+            const response = await judgeApi.voteMessage(
+                id,
+                selectedAppeal.id,
+                messageId
+            );
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId
+                        ? {
+                              ...msg,
+                              votes: response.votes,
+                              vetoes: response.vetoes,
+                          }
+                        : msg
+                )
+            );
+            message.success("Vote submitted successfully");
+        } catch (error) {
+            message.error("Failed to submit vote");
+        }
+    };
+
+    const handleVetoMessage = async (messageId: string) => {
+        if (!id || !selectedAppeal) return;
+
+        try {
+            const response = await judgeApi.vetoMessage(
+                id,
+                selectedAppeal.id,
+                messageId
+            );
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId
+                        ? {
+                              ...msg,
+                              votes: response.votes,
+                              vetoes: response.vetoes,
+                          }
+                        : msg
+                )
+            );
+            message.success("Vetoed successfully");
+        } catch (error) {
+            message.error("Failed to veto");
+        }
     };
 
     if (loading || !judgeDetail) {
@@ -230,7 +371,7 @@ const DetailPage: React.FC = () => {
         <div className="min-h-screen bg-dark-bg font-exo">
             <Navbar />
             <div className="pt-24 px-4 sm:px-[8%] md:px-[15%] pb-20 max-w-[1920px] mx-auto">
-                {/* 第一部分：标题和天平图 */}
+                {/* PART 1 */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                     <h1 className="text-3xl md:text-4xl font-bold text-center sm:text-left">
                         <span className="text-white">Judge Detail of </span>
@@ -534,11 +675,98 @@ const DetailPage: React.FC = () => {
                                             </h4>
                                         </div>
                                         <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">
-                                            {/* Messages will be loaded here */}
+                                            {messages.map((msg) => (
+                                                <div
+                                                    key={msg.id}
+                                                    className="flex items-start gap-3 mb-4"
+                                                >
+                                                    <Avatar
+                                                        src={msg.user.avatar}
+                                                        icon={
+                                                            !msg.user
+                                                                .avatar && (
+                                                                <UserOutlined />
+                                                            )
+                                                        }
+                                                        className={
+                                                            msg.user.name ===
+                                                            "Judge"
+                                                                ? "bg-highlight-from"
+                                                                : ""
+                                                        }
+                                                    />
+                                                    <div className="flex-1">
+                                                        <div className="bg-dark-card rounded-lg p-4">
+                                                            {msg.user.name ===
+                                                                "Judge" &&
+                                                            isJudgeLoading ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <Spin size="small" />
+                                                                    <span className="text-white">
+                                                                        {
+                                                                            msg.content
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-white">
+                                                                    {
+                                                                        msg.content
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-4 mt-2">
+                                                            <span
+                                                                className="text-gray-400 hover:text-highlight-from cursor-pointer"
+                                                                onClick={() =>
+                                                                    handleVoteMessage(
+                                                                        msg.id
+                                                                    )
+                                                                }
+                                                            >
+                                                                Agree{" "}
+                                                                {msg.votes > 0
+                                                                    ? `(${msg.votes})`
+                                                                    : ""}
+                                                            </span>
+                                                            <span
+                                                                className="text-gray-400 hover:text-highlight-from cursor-pointer"
+                                                                onClick={() =>
+                                                                    handleVetoMessage(
+                                                                        msg.id
+                                                                    )
+                                                                }
+                                                            >
+                                                                Object{" "}
+                                                                {msg.vetoes > 0
+                                                                    ? `(${msg.vetoes})`
+                                                                    : ""}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                         <div className="pt-4 border-t border-gray-700">
                                             <div className="bg-dark-card rounded-lg p-4">
                                                 <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Tooltip title="Call fair judge">
+                                                            <Button
+                                                                icon={
+                                                                    <AuditOutlined />
+                                                                }
+                                                                className="flex items-center justify-center w-8 h-8 bg-transparent border-none text-gray-400 hover:text-highlight-from hover:bg-gray-700 transition-colors"
+                                                                onClick={
+                                                                    handleJudgeArbitration
+                                                                }
+                                                                disabled={
+                                                                    isJudgeLoading
+                                                                }
+                                                            />
+                                                        </Tooltip>
+                                                    </div>
                                                     <CustomTextArea
                                                         value={messageInput}
                                                         onChange={
@@ -832,6 +1060,22 @@ const DetailPage: React.FC = () => {
                             <CheckCircleOutlined
                                 style={{ fontSize: "48px", color: "#52c41a" }}
                             />
+                            <div className="text-center">
+                                <h2 className="text-lg font-bold">
+                                    Total{" "}
+                                    {judgeDetail?.consensus.members.length}{" "}
+                                    contributors,{" "}
+                                    {judgeDetail.progressTree.reduce(
+                                        (total, milestone) =>
+                                            total + milestone.squares,
+                                        0
+                                    )}{" "}
+                                    <span className=" text-highlight-from hover:text-highlight-to transition-colors">
+                                        $SQUARE
+                                    </span>{" "}
+                                    tokens distributed
+                                </h2>
+                            </div>
                             <div className="w-full space-y-4">
                                 {judgeDetail?.consensus.members.map(
                                     (member) => (

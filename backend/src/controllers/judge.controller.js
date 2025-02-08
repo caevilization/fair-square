@@ -9,6 +9,13 @@ const {
 } = require("../models");
 const logger = require("../config/logger");
 
+// 临时函数：模拟获取用户ID
+// TODO: 这是一个临时的解决方案，需要替换为真实的用户认证系统
+const fakeGetUserId = async () => {
+    let id = await Contributor.findOne().then((contributor) => contributor._id);
+    return id;
+};
+
 // 获取 Judge 详情
 exports.getJudgeDetail = async (req, res) => {
     try {
@@ -210,7 +217,7 @@ exports.createAppealMessage = async (req, res) => {
     try {
         const { appealId } = req.params;
         const { content } = req.body;
-        const contributorId = req.user._id; // 假设已经通过认证中间件设置了 req.user
+        const contributorId = await fakeGetUserId(); // 使用临时函数
 
         const message = await AppealMessage.create({
             appealId,
@@ -281,7 +288,8 @@ exports.getDecisions = async (req, res) => {
 exports.createDecision = async (req, res) => {
     try {
         const { repositoryId } = req.params;
-        const { decision, reason, milestoneId, contributorId } = req.body;
+        const { decision, reason, milestoneId } = req.body;
+        const contributorId = await fakeGetUserId(); // 使用临时函数
 
         // 检查是否已存在该贡献者的决策
         const existingDecision = await Decision.findOne({
@@ -338,7 +346,7 @@ exports.voteAppeal = async (req, res) => {
     try {
         const { appealId } = req.params;
         const { vote } = req.body; // "pro" or "con"
-        const contributorId = req.user._id;
+        const contributorId = await fakeGetUserId(); // 使用临时函数
 
         const appeal = await Appeal.findById(appealId);
         if (!appeal) {
@@ -385,7 +393,7 @@ exports.voteAppeal = async (req, res) => {
 exports.voteMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
-        const contributorId = req.user._id;
+        const contributorId = await fakeGetUserId(); // 使用临时函数
 
         const message = await AppealMessage.findById(messageId);
         if (!message) {
@@ -420,7 +428,7 @@ exports.voteMessage = async (req, res) => {
 exports.vetoMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
-        const contributorId = req.user._id;
+        const contributorId = await fakeGetUserId(); // 使用临时函数
 
         const message = await AppealMessage.findById(messageId);
         if (!message) {

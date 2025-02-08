@@ -8,6 +8,18 @@ const api = axios.create({
     },
 });
 
+export interface Message {
+    id: string;
+    content: string;
+    timestamp: string;
+    votes: number;
+    vetoes: number;
+    user: {
+        name: string;
+        avatar: string;
+    };
+}
+
 export interface Repository {
     id: string;
     name: string;
