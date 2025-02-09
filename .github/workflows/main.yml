@@ -21,8 +21,11 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: backend/pnpm-lock.json
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Install dependencies
-        run: npm install --include=dev
+        run: pnpm install --include=dev
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
