@@ -14,10 +14,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Navigate to subdirectory
-        run: echo "Working in backend"
-        working-directory: ./backend
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -40,7 +36,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ./backend
           push: true
           tags: ${{ vars.DOCKERHUB_IMAGE_NAME }}:main
 
