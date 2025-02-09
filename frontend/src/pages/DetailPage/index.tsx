@@ -248,7 +248,7 @@ const DetailPage: React.FC = () => {
             const timeoutId = setTimeout(() => controller.abort(), 60000);
 
             const response = await fetch(
-                "http://54.145.197.118:3000/e74d3d91-491d-0c68-9e66-c19544352ca0/message",
+                "/agent-api/e74d3d91-491d-0c68-9e66-c19544352ca0/message",
                 {
                     method: "POST",
                     headers: {

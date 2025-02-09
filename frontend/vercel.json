@@ -5,6 +5,10 @@
             "destination": "http://54.145.197.118:5000/api/:path"
         },
         {
+            "source": "/agent-api/:path(.*)",
+            "destination": "http://54.145.197.118:3000/:path"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

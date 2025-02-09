@@ -18,6 +18,11 @@ export default defineConfig({
                 // target: "http://localhost:5000",
                 changeOrigin: true,
             },
+            "/agent-api": {
+                target: "http://54.145.197.118:3000",
+                // target: "http://localhost:5000",
+                changeOrigin: true,
+            },
         },
     },
     base: "/",
