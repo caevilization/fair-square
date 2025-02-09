@@ -4,9 +4,12 @@ import "./styles.css";
 const titles = [
     "MEET YOUR AI JUDGE",
     "GIT INCENTIVE LAYER 3.0",
-    "RESHAPE OSS GOVERNANCE",
     "FAIR SQUARE, CODE WISE",
+    "CONSENSUS MECHANISM FOR WORK",
     "EMPOWER CONTRIBUTORS",
+    "INFRA OF CO-BUILD TEAMS",
+    "RESHAPE OSS GOVERNANCE",
+    "PROOF OF WORK IRL",
 ];
 
 interface TypewriterTitleProps {
