@@ -255,7 +255,14 @@ const DetailPage: React.FC = () => {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        text: "Please generate standard arbitration format content",
+                        // TODO:
+                        text: `                        
+                            Please generate a code contribution ruling. We are working on a product demo, so please do not mention incomplete information.  
+
+                            The scenario is a JavaScript project where the first user completed the code, and the second user completed security testing and documentation. They were allocated 5000 and 1000 tokens, respectively, but the second user felt undervalued, leading to a discussion.  
+
+                            Output: Both users have valid points. The second user delivered high-quality work, so an additional 200 tokens will be issued by the Fair Square platform, with no impact on other users. (100 words)
+                        `,
                     }),
                     signal: controller.signal,
                 }
