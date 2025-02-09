@@ -1,7 +1,4 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Input, Button, message } from "antd";
-import CustomModal from "@/components/CustomModal";
+import React from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Screen1 from "./Screen1";
