@@ -195,10 +195,10 @@ const Screen1: React.FC = () => {
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium mb-2">
-                            Repository URL
+                            Just one simple URL to start:
                         </label>
                         <Input
-                            placeholder="https://github.com/username/repository"
+                            placeholder="https://github.com/username/repository (Please use public repo)"
                             value={repoUrl}
                             onChange={(e) => setRepoUrl(e.target.value)}
                         />
