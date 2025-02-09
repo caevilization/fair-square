@@ -424,7 +424,7 @@ async function generateFakeData() {
                 }
 
                 // Create 0-2 appeals for each milestone
-                const appealCount = random(1, 2);
+                const appealCount = random(0, 2);
                 for (let j = 0; j < appealCount; j++) {
                     const appeal = await Appeal.create({
                         repositoryId: repository._id,
