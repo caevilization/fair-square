@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { judgeApi, type Repository } from "@/services/api";
-import { Spin, message } from "antd";
+import { message } from "antd";
 import ReactLoading from "react-loading";
 
 const ListPage: React.FC = () => {

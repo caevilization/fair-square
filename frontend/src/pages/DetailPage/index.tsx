@@ -85,7 +85,7 @@ const DetailPage: React.FC = () => {
     const [decisions, setDecisions] = useState<Decision[]>([]);
     const [selectedContributorForDecision, setSelectedContributorForDecision] =
         useState<string>("");
-    const [hoveredContributor, setHoveredContributor] = useState<string>("");
+    // const [hoveredContributor, setHoveredContributor] = useState<string>("");
     const [consensusProgress, setConsensusProgress] = useState<number>(40);
     const [isSuccessModalVisible, setIsSuccessModalVisible] =
         useState<boolean>(false);
@@ -96,6 +96,11 @@ const DetailPage: React.FC = () => {
     const [isJudgeLoading, setIsJudgeLoading] = useState(false);
     const [judgeMessage, setJudgeMessage] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+
+    // TODO: Delete this
+    useEffect(() => {
+        console.log(judgeMessage, distributedMembers);
+    }, []);
 
     useEffect(() => {
         if (id) {
@@ -174,17 +179,6 @@ const DetailPage: React.FC = () => {
         }
     };
 
-    const handleVoteAppeal = async (appealId: string, vote: "pro" | "con") => {
-        try {
-            await judgeApi.voteAppeal(id!, appealId, vote);
-            message.success("Vote submitted successfully");
-            fetchData();
-        } catch (error) {
-            message.error("Failed to submit vote");
-            console.error("Failed to vote:", error);
-        }
-    };
-
     const handleSendMessage = async () => {
         if (!messageInput.trim() || !selectedAppeal) {
             return;
@@ -211,15 +205,16 @@ const DetailPage: React.FC = () => {
     };
 
     // Calculate consensus progress
-    const calculateConsensusProgress = () => {
-        if (!judgeDetail?.consensus.members.length) return 0;
-        const decidedCount = decisions.length;
-        return Math.round(
-            (decidedCount / judgeDetail.consensus.members.length) * 100
-        );
-    };
+    // const calculateConsensusProgress = () => {
+    //     if (!judgeDetail?.consensus.members.length) return 0;
+    //     const decidedCount = decisions.length;
+    //     return Math.round(
+    //         (decidedCount / judgeDetail.consensus.members.length) * 100
+    //     );
+    // };
 
     const handleTxClick = (memberId: string) => {
+        console.log(memberId);
         window.open(
             "https://suiscan.xyz/mainnet/tx/AVk6xB47NkqxtHDVz7WDXnKbq5vsWgJX1BjEjhhxw1z8",
             "_blank"
